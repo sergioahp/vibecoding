@@ -22,6 +22,8 @@ concurrency:
 defaults:
   run:
     working-directory: agent-generated/fishslop
+    # Naming the shell switches on pipefail, so `cmd | tee log` fails when cmd does.
+    shell: bash
 
 jobs:
   check:
@@ -66,14 +68,22 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Smoke test
         run: node e2e/smoke.mjs | tee smoke.log
+      # A scripted player runs whole games. These fail if a balance change makes the
+      # game unwinnable, or makes upgrades pointless.
+      - name: Balance check, a sensible player wins within 15 minutes
+        run: npm run -s bot -- sensible 900 --expect=win | tee bot-sensible.log
+      - name: Balance check, rushing eggs without upgrades does not win
+        run: npm run -s bot -- eggrush 900 --expect=no-win | tee bot-eggrush.log
       - name: Summary
         if: always()
         run: |
           {
-            echo '### Fishslop smoke test'
-            echo '```'
-            cat smoke.log 2>/dev/null || echo 'no log'
-            echo '```'
+            for f in smoke bot-sensible bot-eggrush; do
+              echo "### $f"
+              echo '```'
+              cat "$f.log" 2>/dev/null || echo 'did not run'
+              echo '```'
+            done
             echo 'Screenshots are attached to this run as the `fishslop-screenshots` artifact.'
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
