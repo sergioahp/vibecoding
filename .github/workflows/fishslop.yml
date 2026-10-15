@@ -22,6 +22,8 @@ concurrency:
 defaults:
   run:
     working-directory: agent-generated/fishslop
+    # Naming the shell switches on pipefail, so `cmd | tee log` fails when cmd does.
+    shell: bash
 
 jobs:
   check:
