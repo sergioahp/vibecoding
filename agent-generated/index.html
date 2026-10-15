@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vibecoding experiments</title>
+    <style>
+      :root {
+        --bg: #f3f6f7;
+        --fg: #10202a;
+        --dim: #5a6b75;
+        --accent: #0b6e8a;
+        --card: #ffffff;
+        --line: #d5dfe3;
+        color-scheme: light dark;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0b141a;
+          --fg: #e3edf2;
+          --dim: #8ea3ad;
+          --accent: #5fd3f0;
+          --card: #121f27;
+          --line: #233540;
+        }
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font: 16px/1.6 system-ui, sans-serif;
+      }
+      main {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 56px 16px;
+      }
+      h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+      }
+      p {
+        margin: 0 0 28px;
+        color: var(--dim);
+      }
+      a.card {
+        display: block;
+        padding: 18px 20px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--card);
+        color: inherit;
+        text-decoration: none;
+      }
+      a.card:hover,
+      a.card:focus-visible {
+        border-color: var(--accent);
+      }
+      a.card strong {
+        color: var(--accent);
+        font-size: 18px;
+      }
+      a.card span {
+        display: block;
+        color: var(--dim);
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Vibecoding experiments</h1>
+      <p>Things built by Claude in cloud sessions, deployed by GitHub Actions.</p>
+      <a class="card" href="./fishslop/">
+        <strong>Fishslop</strong>
+        <span>A 3D aquarium game: pilot a feeding sub, grow guppies, harpoon monsters. Keyboard and mouse.</span>
+      </a>
+    </main>
+  </body>
+</html>
