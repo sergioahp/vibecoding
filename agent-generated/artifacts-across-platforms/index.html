@@ -1,0 +1,274 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Artifacts Across Platforms</title>
+<style>
+/* layout: a catalog/specimen-card page — each platform and each bug report gets a numbered museum-label treatment */
+:root{
+  --paper:#eeece4;
+  --paper-2:#e2ded2;
+  --ink:#232019;
+  --ink-dim:#6b6456;
+  --brass:#946f2e;
+  --brass-dim:#a98a52;
+  --line:#c9c2ae;
+  --bad:#8a3b2e;
+  --good:#3c5a3f;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#1c1a16;
+    --paper-2:#242019;
+    --ink:#eae5d8;
+    --ink-dim:#9c9586;
+    --brass:#d1a753;
+    --brass-dim:#b38c45;
+    --line:#423c30;
+    --bad:#d4786a;
+    --good:#8cb08f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#1c1a16;
+  --paper-2:#242019;
+  --ink:#eae5d8;
+  --ink-dim:#9c9586;
+  --brass:#d1a753;
+  --brass-dim:#b38c45;
+  --line:#423c30;
+  --bad:#d4786a;
+  --good:#8cb08f;
+  color-scheme: dark;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'IBM Plex Sans', system-ui, sans-serif;
+  padding-left:max(16px, env(safe-area-inset-left,0px));
+  padding-right:max(16px, env(safe-area-inset-right,0px));
+}
+.wrap{max-width:860px;margin:0 auto;padding-block:56px 80px}
+
+h1,h2,h3{font-family:'Fraunces', Georgia, serif; text-wrap:balance; margin:0}
+.eyebrow{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--brass);
+}
+.hed{font-size:clamp(34px,6vw,54px); font-weight:600; line-height:1.05; margin-top:10px}
+.hed em{font-style:italic; color:var(--brass)}
+.dek{
+  font-size:17px;
+  line-height:1.6;
+  color:var(--ink-dim);
+  max-width:62ch;
+  margin-top:18px;
+}
+.meta-strip{
+  display:flex; flex-wrap:wrap; gap:8px 20px;
+  margin-top:26px; padding-top:18px; border-top:1px solid var(--line);
+  font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ink-dim);
+}
+.meta-strip b{color:var(--ink); font-weight:600}
+
+section{margin-top:64px}
+.sec-head{display:flex; align-items:baseline; gap:12px; margin-bottom:22px}
+.sec-num{font-family:'IBM Plex Mono', monospace; color:var(--brass-dim); font-size:13px}
+.sec-head h2{font-size:26px; font-weight:600}
+
+p.lead{font-size:15.5px; line-height:1.7; max-width:66ch; color:var(--ink)}
+p.lead + p.lead{margin-top:12px}
+
+/* platform table */
+.table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:3px}
+table{width:100%; border-collapse:collapse; min-width:640px; font-size:14px}
+thead th{
+  text-align:left; font-family:'IBM Plex Mono', monospace; font-size:11px;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim);
+  font-weight:500; padding:12px 16px; background:var(--paper-2);
+  border-bottom:1px solid var(--line);
+}
+tbody td{padding:14px 16px; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.5}
+tbody tr:last-child td{border-bottom:none}
+td.platform{font-family:'Fraunces', serif; font-weight:600; font-size:16px; white-space:nowrap}
+td .sub{display:block; font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-dim); margin-top:2px}
+.tag{
+  display:inline-block; font-family:'IBM Plex Mono', monospace; font-size:10.5px;
+  padding:2px 7px; border-radius:2px; border:1px solid currentColor;
+}
+.tag.good{color:var(--good)}
+.tag.bad{color:var(--bad)}
+.tag.mid{color:var(--brass-dim)}
+
+/* specimen cards for field notes */
+.specimens{display:grid; gap:14px}
+.specimen{
+  border:1px solid var(--line); border-radius:3px; padding:18px 20px;
+  background:var(--paper-2);
+  display:grid; grid-template-columns:auto 1fr; gap:4px 18px;
+}
+.specimen .num{
+  font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--brass);
+  writing-mode:vertical-rl; text-orientation:mixed; transform:rotate(180deg);
+  justify-self:center;
+}
+.specimen .body{min-width:0}
+.specimen h3{font-size:16.5px; font-weight:600; margin-bottom:6px}
+.specimen p{font-size:14.5px; line-height:1.65; color:var(--ink); margin:0}
+.specimen .src{
+  display:inline-flex; align-items:center; gap:6px; margin-top:10px;
+  font-family:'IBM Plex Mono', monospace; font-size:11.5px;
+}
+.specimen .src a{color:var(--brass-dim)}
+.specimen .status{
+  font-family:'IBM Plex Mono', monospace; font-size:10.5px; text-transform:uppercase;
+  letter-spacing:.06em; color:var(--ink-dim); margin-left:10px;
+}
+
+/* own-screenshot note */
+.callout{
+  border-left:3px solid var(--brass);
+  padding:4px 0 4px 18px;
+  margin-top:40px;
+}
+.callout p{font-size:14.5px; line-height:1.65; color:var(--ink); max-width:62ch}
+.callout .tag-line{font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-dim); margin-bottom:8px}
+
+.sources{border-top:1px solid var(--line); margin-top:72px; padding-top:22px}
+.sources h2{font-size:15px; font-family:'IBM Plex Mono', monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-dim); font-weight:500}
+.sources ol{margin:16px 0 0; padding-left:20px; font-size:13.5px; line-height:1.9; color:var(--ink-dim)}
+.sources a{color:var(--brass-dim)}
+.caveat{font-size:13px; color:var(--ink-dim); margin-top:14px; line-height:1.7; max-width:62ch}
+
+a{color:var(--brass); text-decoration-color:var(--line)}
+a:hover{text-decoration-color:var(--brass)}
+
+@media (max-width:560px){
+  .specimen{grid-template-columns:1fr}
+  .specimen .num{writing-mode:horizontal-tb; transform:none; justify-self:start}
+}
+</style>
+
+<div class="wrap">
+
+  <div class="eyebrow">Field guide · vibe-coding prep</div>
+  <h1 class="hed">How artifacts show up<br>on <em>website</em>, <em>Linux app</em>, and <em>Windows app</em></h1>
+  <p class="dek">Same published page, three different display cases. This is a working comparison — assembled from a live session plus public bug reports — for a class on what "vibe-coding" tooling actually looks like outside one browser tab.</p>
+
+  <div class="meta-strip">
+    <span><b>Compiled</b> Oct 2026</span>
+    <span><b>Surfaces</b> claude.ai · Claude Desktop (Linux) · Claude Desktop (Windows) · mobile</span>
+    <span><b>Confidence</b> mixed — see methodology</span>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">01</span><h2>The part that doesn't change</h2></div>
+    <p class="lead">An artifact is one HTML page, built once and served from the same URL to everyone. It runs inside a locked-down frame — no print dialog, no arbitrary network calls, no reading the clipboard — and that sandbox is identical on every platform. What differs is the <em style="font-style:italic">case it's displayed in</em>: the side panel, the window chrome, whether the panel opens automatically, and whether the host app has finished wiring up its own artifact viewer yet.</p>
+    <p class="lead">That second part — the display case — is still being actively rebuilt as of this writing, which is exactly why the three surfaces don't behave identically yet.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><h2>Surface by surface</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Surface</th><th>Chrome</th><th>Feel</th><th>Reported gaps</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="platform">Website<span class="sub">claude.ai</span></td>
+            <td>Right-hand panel, opens on publish; full Artifacts tab.</td>
+            <td><span class="tag good">reference behavior</span></td>
+            <td>Treated as the baseline everything else is compared against.</td>
+          </tr>
+          <tr>
+            <td class="platform">Linux app<span class="sub">desktop, beta</span></td>
+            <td>Same Chat / Cowork / Code tabs as macOS and Windows.</td>
+            <td><span class="tag good">reported as on par</span></td>
+            <td>One independent tester found no meaningful gap vs. the macOS build. "Computer use" (screen/local-file control) isn't in the Linux beta yet — that's a separate feature from artifact rendering.</td>
+          </tr>
+          <tr>
+            <td class="platform">Windows app<span class="sub">desktop</span></td>
+            <td>Native window; adds local-file and on-screen integration the browser can't do.</td>
+            <td><span class="tag mid">integration-first</span></td>
+            <td>Needs Windows 10 build 19041+ with S Mode off. Its edge over the browser is local reach, not artifact fidelity specifically.</td>
+          </tr>
+          <tr>
+            <td class="platform">Mobile app<span class="sub">iOS / Android</span></td>
+            <td>No persistent Artifacts tab for this surface.</td>
+            <td><span class="tag bad">known gap</span></td>
+            <td>Multiple reports: artifacts published from Claude Code don't show up in the mobile app at all, though they render fine on web and desktop.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><h2>Field notes — specific reports</h2></div>
+    <div class="specimens">
+
+      <div class="specimen">
+        <div class="num">A</div>
+        <div class="body">
+          <h3>macOS desktop: preview panel stays empty <span class="status">unresolved, single report</span></h3>
+          <p>An HTML artifact generates normally in chat, but the right-side preview panel never opens in the macOS desktop app — the same request renders fine at claude.ai. Filed mid-2026, no maintainer reply at time of writing.</p>
+          <span class="src">↳ <a href="https://claudeissues.com/issue/78065-bug-macos-artifact-preview-panel-not-rendering-in-claude-desktop-m1-pro" target="_blank" rel="noopener">claudeissues.com #78065</a></span>
+        </div>
+      </div>
+
+      <div class="specimen">
+        <div class="num">B</div>
+        <div class="body">
+          <h3>macOS desktop: Artifacts sidebar never syncs <span class="status">closed, not planned</span></h3>
+          <p>A related report: the Artifacts tab in the desktop sidebar stays empty even though the same items list correctly at claude.ai/artifacts. Closed without a fix.</p>
+          <span class="src">↳ <a href="https://claudeissues.com/issue/78095-bug-macos-m1-pro-artifacts-tab-in-sidebar-never-syncs-always-empty-despite-succe" target="_blank" rel="noopener">claudeissues.com #78095</a></span>
+        </div>
+      </div>
+
+      <div class="specimen">
+        <div class="num">C</div>
+        <div class="body">
+          <h3>Mobile app: Claude Code artifacts don't appear <span class="status">reported gap</span></h3>
+          <p>Artifacts published from a Claude Code session show up on web and desktop but not in the mobile app, per user reports. This matches the broader pattern: mobile is consistently the surface furthest behind.</p>
+          <span class="src">↳ <a href="https://claudeissues.com/issue/78792-bug-published-claude-code-artifacts-do-not-appear-in-the-mobile-app-they-show-on" target="_blank" rel="noopener">claudeissues.com #78792</a></span>
+        </div>
+      </div>
+
+      <div class="specimen">
+        <div class="num">D</div>
+        <div class="body">
+          <h3>Launch time and memory: browser vs. desktop app <span class="status">secondary source</span></h3>
+          <p>One third-party guide clocks the browser at roughly 10–12 seconds to a usable chat, 1.2–2.0+ GB of memory (counting the tab), versus about 3 seconds and 180–250 MB for the native desktop app. Treat these as one blogger's numbers, not a benchmark — but they're the kind of difference a class demo will actually show.</p>
+          <span class="src">↳ <a href="https://ai.zenken.co.jp/en/post/claude-desktop-guide/" target="_blank" rel="noopener">ai.zenken.co.jp desktop guide</a></span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="callout">
+    <div class="tag-line">Specimen E · from this session, live</div>
+    <p>Your own two screenshots — Firefox on the left, the native Linux app on the right — show the <em style="font-style:italic">same</em> plain-text transcript with no artifact panel open in either. That's not a platform gap: no artifact had been published in that turn yet, so there was nothing for either shell to display. The panel only appears once something is actually published — which this page now tests directly, on whichever of the two you're reading it in.</p>
+  </div>
+
+  <div class="sources">
+    <h2>Sources</h2>
+    <ol>
+      <li><a href="https://claudeissues.com/issue/78065-bug-macos-artifact-preview-panel-not-rendering-in-claude-desktop-m1-pro" target="_blank" rel="noopener">[BUG] Artifact preview panel not rendering in Claude Desktop — macOS M1 Pro</a> — claudeissues.com</li>
+      <li><a href="https://claudeissues.com/issue/78095-bug-macos-m1-pro-artifacts-tab-in-sidebar-never-syncs-always-empty-despite-succe" target="_blank" rel="noopener">[BUG] Artifacts tab in sidebar never syncs</a> — claudeissues.com</li>
+      <li><a href="https://claudeissues.com/issue/78792-bug-published-claude-code-artifacts-do-not-appear-in-the-mobile-app-they-show-on" target="_blank" rel="noopener">[BUG] Published Claude Code artifacts do not appear in the mobile app</a> — claudeissues.com</li>
+      <li><a href="https://claudeissues.com/issue/27199-bug-artifact-content-frozen-after-publishing-version-increments-but-preview-does" target="_blank" rel="noopener">[BUG] Artifact content frozen after publishing — version increments but preview doesn't update</a> — claudeissues.com</li>
+      <li><a href="https://ai.zenken.co.jp/en/post/claude-desktop-guide/" target="_blank" rel="noopener">Claude Desktop App Guide: Install Steps and What's Different vs. the Browser</a> — ai.zenken.co.jp</li>
+      <li><a href="https://for.you.com/posts/i-tested-the-new-claude-desktop-on-linux-cac9c80e" target="_blank" rel="noopener">I tested the new Claude Desktop on Linux</a> — for.you.com</li>
+      <li><a href="https://pasqualepillitteri.it/en/news/6967/claude-desktop-linux-beta-ubuntu-debian-en" target="_blank" rel="noopener">Claude Desktop Comes to Linux: Official App for Ubuntu and Debian (Beta)</a> — pasqualepillitteri.it</li>
+    </ol>
+    <p class="caveat">Methodology, plainly stated: items 1–4 come from claudeissues.com, a third-party bug aggregator — these are user-submitted reports, not confirmed by Anthropic, and some were still open or closed-without-fix at the time of writing. Items 5–7 are independent blogs, not official docs. Nothing here replaces checking the current Claude Code / Claude Desktop documentation before teaching it as settled fact — platform behavior in this space is changing quickly.</p>
+  </div>
+
+</div>
