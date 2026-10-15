@@ -12,6 +12,7 @@ npm run dev        # http://localhost:5173
 npm test           # unit tests for the game rules (node:test)
 npm run build      # typecheck + production build into dist/
 node e2e/smoke.mjs # plays the built game in headless Chromium (needs a build)
+npm run bot        # a scripted player runs a whole game and reports the balance (needs a build)
 ```
 
 ## Controls
@@ -28,6 +29,7 @@ WASD swim, mouse look, Space/C up and down, Shift boost, click or F to drop food
 | `src/tank.ts` | The aquarium: sand, caustics, rocks, coral, seaweed, bubbles. |
 | `src/models.ts` | Procedural meshes. |
 | `e2e/smoke.mjs` | Headless play-through used by CI. |
+| `e2e/bot.mjs` | Scripted player for balance testing. |
 
 ## CI and deploy
 
@@ -38,3 +40,13 @@ WASD swim, mouse look, Space/C up and down, Shift boost, click or F to drop food
 3. **Deploy to GitHub Pages**: only on pushes to `master`.
 
 CI runners have no GPU, so the browser renders in software at a few frames per second. The smoke test turns on `manualClock` and moves game time with `window.__fishslop.advance(seconds)` in fixed 60 Hz steps, which keeps it fast and deterministic.
+
+## Balance bot
+
+`npm run bot -- [strategy] [maxSeconds]` plays a full game in headless Chromium in about 25 seconds and prints a minute-by-minute log: money, fish, losses, monsters slain, upgrades and egg pieces, then when it won or lost. Strategies:
+
+- `sensible` (default): grows the tank, buys the upgrades that pay off, fights every monster, then saves for eggs.
+- `sensible-nofight`: the same, but never fires the harpoon.
+- `eggrush`: keeps four fish and buys nothing but egg pieces.
+
+It reads shop prices and hunger from `src/rules.ts`, so after a rebalance just rerun it. With the current numbers, `sensible` wins in about 10–11 minutes, `eggrush` stalls at one egg piece, and `sensible-nofight` eventually loses. A Claude subagent wrote the first version while play-testing the game.

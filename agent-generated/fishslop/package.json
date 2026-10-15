@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "node --test --experimental-strip-types \"src/**/*.test.ts\""
+    "test": "node --test --experimental-strip-types \"src/**/*.test.ts\"",
+    "bot": "node --experimental-strip-types e2e/bot.mjs"
   },
   "dependencies": {
     "three": "0.186.1"
