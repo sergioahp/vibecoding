@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fishslop</title>
+    <meta name="description" content="Pilot a feeding submarine through a 3D aquarium. Grow guppies, collect their coins, and harpoon the monsters." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bungee&family=Chakra+Petch:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <canvas id="scene"></canvas>
+
+    <div id="hud" hidden>
+      <div class="panel gauges">
+        <div class="money"><span class="coin-icon" aria-hidden="true"></span><span id="money">0</span></div>
+        <dl class="readouts">
+          <div><dt>Fish</dt><dd id="fish-count">0</dd></div>
+          <div><dt>Pellets</dt><dd id="pellets">0/3</dd></div>
+          <div><dt>Depth</dt><dd id="depth">0 m</dd></div>
+        </dl>
+      </div>
+
+      <div class="panel goals">
+        <div><dt>Egg</dt><dd id="egg-pips" class="pips"></dd></div>
+        <div><dt>Next contact</dt><dd id="contact">--:--</dd></div>
+      </div>
+
+      <div id="alert" hidden></div>
+      <div id="toasts"></div>
+      <div id="crosshair" aria-hidden="true"></div>
+      <div id="labels"></div>
+
+      <div id="shop"></div>
+      <p class="hints">
+        <b>WASD</b> swim · <b>Mouse</b> look · <b>Space/C</b> up/down · <b>Shift</b> boost · <b>Click/F</b> feed ·
+        <b>Right-click/R</b> harpoon · <b>1–6</b> shop · <b>M</b> sound · <b>Esc</b> pause
+      </p>
+    </div>
+
+    <section id="overlay-title" class="overlay">
+      <div class="card">
+        <h1 class="logo">Fishslop</h1>
+        <p class="tagline">
+          You pilot the feeding sub. Keep the guppies fed, grow them, scoop up what they drop, and harpoon whatever
+          comes through the glass.
+        </p>
+        <ul class="howto">
+          <li><span>Feed</span>Drop pellets with click or F. Hungry fish turn green; starving ones die.</li>
+          <li><span>Grow</span>Fry become guppies, big guppies, then kings. Bigger fish drop richer coins.</li>
+          <li><span>Collect</span>Swim near coins to scoop them up before they fade on the sand.</li>
+          <li><span>Defend</span>Monsters arrive on a timer. Harpoon them with right-click or R.</li>
+          <li><span>Win</span>Buy all three egg pieces.</li>
+        </ul>
+        <button id="start" type="button" class="primary">Dive in</button>
+        <p class="fine touch-only">Needs a keyboard and mouse.</p>
+        <p class="fine">
+          Inspired by Insaniquarium and Theo's Fishslop benchmark. Built from scratch with Three.js by Claude.
+        </p>
+      </div>
+    </section>
+
+    <section id="overlay-pause" class="overlay" hidden>
+      <div class="card small">
+        <h2>Paused</h2>
+        <p>You can still shop with the buttons below or keys 1–6.</p>
+        <button id="resume" type="button" class="primary">Resume</button>
+      </div>
+    </section>
+
+    <section id="overlay-end" class="overlay" hidden>
+      <div class="card small">
+        <h2 id="end-title"></h2>
+        <p id="end-sub"></p>
+        <dl id="end-stats" class="stats"></dl>
+        <button id="restart" type="button" class="primary">Play again</button>
+      </div>
+    </section>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

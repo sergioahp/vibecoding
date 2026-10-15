@@ -1,0 +1,111 @@
+name: Fishslop
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'agent-generated/**'
+      - '.github/workflows/fishslop.yml'
+  pull_request:
+    paths:
+      - 'agent-generated/**'
+      - '.github/workflows/fishslop.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fishslop-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: agent-generated/fishslop
+
+jobs:
+  check:
+    name: Typecheck, unit tests, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: agent-generated/fishslop/package-lock.json
+      - run: npm ci
+      - name: Unit tests (game rules)
+        run: npm test
+      - name: Typecheck and build
+        run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fishslop-dist
+          path: agent-generated/fishslop/dist
+          retention-days: 7
+
+  smoke:
+    name: Play-test in headless Chromium
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: agent-generated/fishslop/package-lock.json
+      - run: npm ci
+      - uses: actions/download-artifact@v5
+        with:
+          name: fishslop-dist
+          path: agent-generated/fishslop/dist
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Smoke test
+        run: node e2e/smoke.mjs | tee smoke.log
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '### Fishslop smoke test'
+            echo '```'
+            cat smoke.log 2>/dev/null || echo 'no log'
+            echo '```'
+            echo 'Screenshots are attached to this run as the `fishslop-screenshots` artifact.'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fishslop-screenshots
+          path: agent-generated/fishslop/e2e/screenshots
+          retention-days: 14
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: [check, smoke]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}fishslop/
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          name: fishslop-dist
+          path: _site/fishslop
+      - name: Add landing page
+        working-directory: .
+        run: cp agent-generated/index.html _site/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
