@@ -8,6 +8,7 @@ import {
   HUNGER,
   STAGES,
   TANK,
+  WALL_INSET,
   eatRadius,
   stageFor,
   type CoinKind,
@@ -187,7 +188,7 @@ export class Fish {
 
     this.vel.lerp(desired, Math.min(1, dt * rate));
     this.pos.addScaledVector(this.vel, dt);
-    clampToTank(this.pos, 0.7, FISH_FLOOR_CLEARANCE, 0.8);
+    clampToTank(this.pos, WALL_INSET, FISH_FLOOR_CLEARANCE, 0.8);
     pushOutOfRocks(this.pos, w.colliders, 0.25 * this.scale);
 
     faceAlong(this.model.root, this.vel, 6, dt);
@@ -260,7 +261,7 @@ export class Pellet {
     this.pos.x += Math.sin(t * 3 + this.phase) * 0.15 * dt;
     // Rocks shed pellets onto the sand, so nothing settles where fish can't get it.
     if (pushOutOfRocks(this.pos, colliders, 0.12)) this.vel.y = Math.min(this.vel.y, -0.6);
-    clampToTank(this.pos, 0.3, -1, 0.2);
+    clampToTank(this.pos, WALL_INSET, -1, 0.2);
     const rest = floorHeight(this.pos.x, this.pos.z) + FOOD_REST_OFFSET;
     if (this.pos.y <= rest) {
       this.pos.y = rest;
@@ -338,7 +339,7 @@ export class Bolt {
     if (target && target.alive) {
       // Gentle homing so near-misses still land.
       tmp.subVectors(target.pos, this.pos).setLength(32);
-      if (tmp.angleTo(this.vel) < 0.35) this.vel.lerp(tmp, Math.min(1, dt * 5)).setLength(32);
+      if (tmp.angleTo(this.vel) < 0.18) this.vel.lerp(tmp, Math.min(1, dt * 4)).setLength(32);
     }
     this.pos.addScaledVector(this.vel, dt);
     this.mesh.lookAt(tmp.copy(this.pos).add(this.vel));

@@ -164,10 +164,10 @@ export function buildTank(scene: THREE.Scene): Tank {
       color: 0x8fe3ff,
       emissive: 0x2a8aa8,
       transparent: true,
-      opacity: 0.55,
+      opacity: 0.4,
       side: THREE.DoubleSide,
       roughness: 0.15,
-      flatShading: true,
+      depthWrite: false,
     }),
   );
   scene.add(surf);

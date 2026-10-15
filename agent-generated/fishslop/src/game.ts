@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {
+  HARPOON_COOLDOWN,
   MONSTER,
   START_FISH,
   TANK,
@@ -51,6 +52,8 @@ export class Game {
   private elapsed = 0;
   private readonly lookAt = new THREE.Vector3();
   private readonly tmp = new THREE.Vector3();
+  private readonly tmp2 = new THREE.Vector3();
+  private readonly upTmp = new THREE.Vector3();
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -61,7 +64,7 @@ export class Game {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
 
@@ -215,6 +218,8 @@ export class Game {
   private finish(won: boolean) {
     this.state = won ? 'won' : 'over';
     if (document.pointerLockElement) document.exitPointerLock();
+    this.hud.show(false);
+    this.hud.clearWorld();
     this.hud.end({ won, time: this.playTime, ...this.stats });
     this.hud.overlay('end');
     if (won) this.sfx.win();
@@ -236,7 +241,7 @@ export class Game {
 
   private fire() {
     if (this.fireCooldown > 0) return;
-    this.fireCooldown = 0.18;
+    this.fireCooldown = HARPOON_COOLDOWN;
     const nose = this.sub.nose();
     const camDir = this.camera.getWorldDirection(new THREE.Vector3());
     const target = this.camera.position.clone().addScaledVector(camDir, 40);
@@ -244,7 +249,7 @@ export class Game {
     const m = this.world.monster;
     if (m && m.alive) {
       const toM = m.pos.clone().sub(nose);
-      if (toM.angleTo(dir) < 0.16) dir.copy(toM.normalize());
+      if (toM.angleTo(dir) < 0.08) dir.copy(toM.normalize());
     }
     this.bolts.push(new Bolt(this.scene, nose, dir));
     this.particles.emit(nose, 3, 0x9ff7ff, 1.2, 0.8, 0.2, 0.3);
@@ -317,6 +322,7 @@ export class Game {
           this.warned = false;
         } else {
           this.nextMonsterAt = this.playTime + 15;
+          this.warned = false;
         }
       }
       return;
@@ -414,14 +420,28 @@ export class Game {
       return;
     }
     const fwd = this.sub.forward();
-    const desired = this.tmp.copy(this.sub.pos).addScaledVector(fwd, -6.4);
-    desired.y += 2.3;
-    desired.x = THREE.MathUtils.clamp(desired.x, TANK.minX + 0.4, TANK.maxX - 0.4);
-    desired.z = THREE.MathUtils.clamp(desired.z, TANK.minZ + 0.4, TANK.maxZ - 0.4);
-    desired.y = THREE.MathUtils.clamp(desired.y, floorHeight(desired.x, desired.z) + 0.5, TANK.maxY - 0.4);
+    // Offsets use the sub's own up axis so the sub sits below the crosshair at any pitch.
+    const up = this.sub.right(this.upTmp).cross(fwd);
+    // Spring arm: if the glass or sand is in the way, pull the camera in along the same line
+    // instead of clamping one axis, so the sub never slides over the crosshair.
+    const anchor = this.tmp.copy(this.sub.pos).addScaledVector(up, 0.5);
+    const arm = this.tmp2.copy(fwd).multiplyScalar(-6.4).addScaledVector(up, 1.8);
+    const end = arm.clone().add(anchor);
+    const floorY = floorHeight(end.x, end.z) + 0.5;
+    let t = 1;
+    const limits: ['x' | 'y' | 'z', number, number][] = [
+      ['x', TANK.minX + 0.3, TANK.maxX - 0.3],
+      // The tank is open at the top, so the camera may rise above the waterline.
+      ['y', floorY, TANK.maxY + 8],
+      ['z', TANK.minZ + 0.3, TANK.maxZ - 0.3],
+    ];
+    for (const [k, lo, hi] of limits) {
+      if (end[k] > hi && arm[k] > 0) t = Math.min(t, (hi - anchor[k]) / arm[k]);
+      if (end[k] < lo && arm[k] < 0) t = Math.min(t, (lo - anchor[k]) / arm[k]);
+    }
+    const desired = anchor.addScaledVector(arm, Math.max(0.2, t));
     cam.position.lerp(desired, 1 - Math.exp(-dt * 8));
-    this.lookAt.copy(this.sub.pos).addScaledVector(fwd, 9);
-    this.lookAt.y += 1.4;
+    this.lookAt.copy(this.sub.pos).addScaledVector(fwd, 9).addScaledVector(up, 1.4);
     cam.lookAt(this.lookAt);
   }
 

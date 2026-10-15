@@ -1,30 +1,24 @@
 // Plays the built game in headless Chromium: loads it, starts a run, swims, buys a fish,
 // feeds a hungry fish and checks it actually eats. Screenshots land in e2e/screenshots/.
-import { spawn } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { preview } from 'vite';
 
-const PORT = 4173;
-const BASE = `http://localhost:${PORT}/`;
-const OUT = new URL('./screenshots/', import.meta.url).pathname;
+const OUT = fileURLToPath(new URL('./screenshots/', import.meta.url));
 
-const server = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort'], { stdio: 'pipe' });
-const stop = () => server.kill('SIGTERM');
-
-async function waitForServer() {
-  for (let i = 0; i < 60; i++) {
-    try {
-      if ((await fetch(BASE)).ok) return;
-    } catch {}
-    await new Promise((r) => setTimeout(r, 250));
-  }
-  throw new Error('preview server did not start');
-}
+// In-process server: nothing to orphan when the test ends. strictPort off so a dev server
+// already on 4173 doesn't make the test silently hit stale files.
+const server = await preview({
+  root: fileURLToPath(new URL('..', import.meta.url)),
+  preview: { port: 4173, strictPort: false },
+  logLevel: 'warn',
+});
+const BASE = server.resolvedUrls.local[0];
 
 const errors = [];
 let browser;
 try {
-  await waitForServer();
   await mkdir(OUT, { recursive: true });
   browser = await chromium.launch({
     args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
@@ -142,5 +136,7 @@ try {
   process.exitCode = 1;
 } finally {
   await browser?.close();
-  stop();
+  await server.close();
 }
+// Belt and braces: never let a stray handle keep CI waiting after the verdict.
+process.exit(process.exitCode ?? 0);

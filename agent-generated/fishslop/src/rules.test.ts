@@ -25,9 +25,10 @@ test('fish of every size can eat food resting on the sand', () => {
 
 test('growth thresholds map to stages', () => {
   assert.equal(stageFor(0), 0);
-  assert.equal(stageFor(2.9), 0);
-  assert.equal(stageFor(3), 1);
-  assert.equal(stageFor(9), 2);
+  assert.equal(stageFor(1.9), 0);
+  assert.equal(stageFor(2), 1);
+  assert.equal(stageFor(6), 2);
+  assert.equal(stageFor(14), 3);
   assert.equal(stageFor(100), 3);
 });
 

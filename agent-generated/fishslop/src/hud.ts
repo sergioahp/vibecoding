@@ -48,7 +48,8 @@ export class Hud {
   private readonly alertEl = $('alert');
   private readonly toasts = $('toasts');
   private readonly labels = $('labels');
-  private readonly monsterBar: HTMLElement;
+  private readonly monsterTag: HTMLElement;
+  private readonly monsterArrow: HTMLElement;
   private readonly monsterFill: HTMLElement;
   private readonly buttons = new Map<ShopId, HTMLButtonElement>();
   private readonly floaters: Floater[] = [];
@@ -74,12 +75,13 @@ export class Hud {
     }
     for (let i = 0; i < EGG_PIECES; i++) this.eggPips.append(document.createElement('i'));
 
-    this.monsterBar = document.createElement('div');
-    this.monsterBar.className = 'monster-bar';
-    this.monsterBar.hidden = true;
-    this.monsterFill = document.createElement('div');
-    this.monsterBar.append(this.monsterFill);
-    this.labels.append(this.monsterBar);
+    this.monsterTag = document.createElement('div');
+    this.monsterTag.className = 'monster-tag';
+    this.monsterTag.hidden = true;
+    this.monsterTag.innerHTML = '<span class="arrow"></span><span class="name">Monster</span><div class="monster-bar"><div></div></div>';
+    this.monsterArrow = this.monsterTag.querySelector('.arrow')!;
+    this.monsterFill = this.monsterTag.querySelector('.monster-bar > div')!;
+    this.labels.append(this.monsterTag);
   }
 
   show(on: boolean) {
@@ -134,7 +136,8 @@ export class Hud {
     this.pellets.classList.toggle('full', pelletsOut >= cap);
     this.depth.textContent = `${depthM.toFixed(1)} m`;
     [...this.eggPips.children].forEach((pip, i) => pip.classList.toggle('on', i < econ.levels.egg));
-    this.contact.textContent = monsterUp ? 'CONTACT' : contactIn === null ? '--:--' : fmtTime(Math.max(0, contactIn));
+    // Round up like the warning banner does, so both read the same second.
+    this.contact.textContent = monsterUp ? 'CONTACT' : contactIn === null ? '--:--' : fmtTime(Math.max(0, Math.ceil(contactIn)));
     this.contact.classList.toggle('hot', monsterUp || (warning !== null && warning > 0));
 
     if (monsterUp) this.setAlert('Monster in the tank. Harpoon it: right-click or R', 'danger');
@@ -194,8 +197,12 @@ export class Hud {
     this.v.copy(pos).project(camera);
     const visible = this.v.z < 1 && Math.abs(this.v.x) < 1.2 && Math.abs(this.v.y) < 1.2;
     el.style.visibility = visible ? 'visible' : 'hidden';
-    const x = ((this.v.x + 1) / 2) * window.innerWidth;
-    const y = ((1 - this.v.y) / 2) * window.innerHeight + dy;
+    this.moveTo(el, this.v.x, this.v.y, dy);
+  }
+
+  private moveTo(el: HTMLElement, nx: number, ny: number, dy = 0) {
+    const x = ((nx + 1) / 2) * window.innerWidth;
+    const y = ((1 - ny) / 2) * window.innerHeight + dy;
     el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
   }
 
@@ -211,13 +218,38 @@ export class Hud {
       }
     }
     if (monster && monster.alive) {
-      this.monsterBar.hidden = false;
+      this.monsterTag.hidden = false;
       this.v.copy(monster.pos);
       this.v.y += 2.6;
-      this.place(this.monsterBar, this.v, camera);
+      this.v.project(camera);
+      let { x, y } = this.v;
+      const behind = this.v.z > 1;
+      if (behind) {
+        x = -x;
+        y = -y;
+      }
+      const onScreen = !behind && Math.abs(x) < 0.95 && Math.abs(y) < 0.95;
+      this.monsterTag.classList.toggle('edge', !onScreen);
+      this.monsterTag.style.visibility = 'visible';
+      if (onScreen) {
+        this.moveTo(this.monsterTag, x, y);
+      } else {
+        // Pin to the screen edge in the monster's direction, clear of the HUD panels and shop.
+        const k = 1 / Math.max(Math.abs(x), Math.abs(y), 1e-6);
+        x *= k;
+        y *= k;
+        this.monsterArrow.style.transform = `rotate(${Math.atan2(-y, x)}rad)`;
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+        const hw = this.monsterTag.offsetWidth / 2 + 12;
+        const hh = this.monsterTag.offsetHeight / 2 + 12;
+        const px = THREE.MathUtils.clamp(((x + 1) / 2) * W, hw, W - hw);
+        const py = THREE.MathUtils.clamp(((1 - y) / 2) * H, hh + 90, H - hh - 120);
+        this.monsterTag.style.transform = `translate(${px}px, ${py}px) translate(-50%, -50%)`;
+      }
       this.monsterFill.style.width = `${Math.max(0, (monster.hp / monster.maxHp) * 100)}%`;
     } else {
-      this.monsterBar.hidden = true;
+      this.monsterTag.hidden = true;
     }
   }
 
