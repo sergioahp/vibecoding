@@ -1,9 +1,10 @@
 // A scripted player for balance testing. It feeds hungry fish, chases coins, buys upgrades
 // and harpoons monsters, then reports how the run went in game time.
 //
-//   npm run build && npm run bot -- [strategy] [maxSeconds]
+//   npm run build && npm run bot -- [strategy] [maxSeconds] [--expect=win|no-win]
 //
 // Strategies: sensible (default), sensible-nofight, eggrush.
+// With --expect the process fails when the outcome differs, which CI uses as a balance check.
 // Shop prices and hunger come from src/rules.ts, so the bot follows rebalances automatically.
 import { mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -11,8 +12,11 @@ import { chromium } from 'playwright';
 import { preview } from 'vite';
 import { HUNGER, SHOP, pelletCap } from '../src/rules.ts';
 
-const strategy = process.argv[2] ?? 'sensible';
-const maxSeconds = Number(process.argv[3] ?? 1200);
+const positional = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+const strategy = positional[0] ?? 'sensible';
+const maxSeconds = Number(positional[1] ?? 1200);
+const expect = process.argv.find((a) => a.startsWith('--expect='))?.slice('--expect='.length);
+if (expect && expect !== 'win' && expect !== 'no-win') throw new Error(`--expect must be win or no-win, got ${expect}`);
 const OUT = fileURLToPath(new URL('./screenshots/', import.meta.url));
 
 const prices = Object.fromEntries(
@@ -243,6 +247,13 @@ try {
   if (errors.length) {
     console.error(`browser errors:\n${errors.join('\n')}`);
     process.exitCode = 1;
+  }
+  const won = r.state === 'won';
+  if (expect && won !== (expect === 'win')) {
+    console.error(`balance check failed: expected ${strategy} to ${expect === 'win' ? 'win' : 'not win'} within ${maxSeconds}s`);
+    process.exitCode = 1;
+  } else if (expect) {
+    console.log(`balance check passed: ${strategy} ${won ? 'won' : 'did not win'} within ${maxSeconds}s, as expected`);
   }
 } finally {
   await browser.close();

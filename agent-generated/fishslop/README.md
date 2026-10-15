@@ -36,7 +36,7 @@ WASD swim, mouse look, Space/C up and down, Shift boost, click or F to drop food
 `.github/workflows/fishslop.yml` runs on every PR that touches `agent-generated/`:
 
 1. **Typecheck, unit tests, build**
-2. **Play-test in headless Chromium**: starts a run, swims, buys a fish, checks the pellet cap and that pellets expire, waits for a hungry fish to eat, keeps fish fed until the first monster arrives. Screenshots are attached to the run.
+2. **Play-test in headless Chromium**: starts a run, swims, buys a fish, checks the pellet cap and that pellets expire, waits for a hungry fish to eat, keeps fish fed until the first monster arrives. Screenshots are attached to the run. Then the balance bot plays two full games: the `sensible` strategy must win within 15 minutes of game time, and `eggrush` must not.
 3. **Deploy to GitHub Pages**: only on pushes to `master`.
 
 CI runners have no GPU, so the browser renders in software at a few frames per second. The smoke test turns on `manualClock` and moves game time with `window.__fishslop.advance(seconds)` in fixed 60 Hz steps, which keeps it fast and deterministic.
