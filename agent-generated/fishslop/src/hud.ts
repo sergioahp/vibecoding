@@ -250,23 +250,32 @@ export class Hud {
         x = -x;
         y = -y;
       }
-      const onScreen = !behind && Math.abs(x) < 0.95 && Math.abs(y) < 0.95;
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      const hw = this.monsterTag.offsetWidth / 2 + 12;
+      const hh = this.monsterTag.offsetHeight / 2 + 12;
+      const sx = ((x + 1) / 2) * W;
+      const sy = ((1 - y) / 2) * H;
+      // On screen only while the whole label fits, so the health bar never hangs off an edge.
+      const onScreen = !behind && sx >= hw && sx <= W - hw && sy >= hh && sy <= H - hh;
       this.monsterTag.classList.toggle('edge', !onScreen);
       this.monsterTag.style.visibility = 'visible';
       if (onScreen) {
-        this.moveTo(this.monsterTag, x, y);
+        this.monsterTag.style.transform = `translate(${sx}px, ${sy}px) translate(-50%, -50%)`;
       } else {
-        // Pin to the screen edge in the monster's direction, clear of the HUD panels and shop.
+        // Pin to the screen edge in the monster's direction, clear of the panels, the alert,
+        // the shop, and on touch screens the button column (and, upright, the whole control cluster).
         const k = 1 / Math.max(Math.abs(x), Math.abs(y), 1e-6);
         x *= k;
         y *= k;
         this.monsterArrow.style.transform = `rotate(${Math.atan2(-y, x)}rad)`;
-        const W = window.innerWidth;
-        const H = window.innerHeight;
-        const hw = this.monsterTag.offsetWidth / 2 + 12;
-        const hh = this.monsterTag.offsetHeight / 2 + 12;
-        const px = THREE.MathUtils.clamp(((x + 1) / 2) * W, hw, W - hw);
-        const py = THREE.MathUtils.clamp(((1 - y) / 2) * H, hh + 90, H - hh - 120);
+        const touch = document.body.classList.contains('touch');
+        const alertBottom = this.alertEl.hidden ? 0 : this.alertEl.getBoundingClientRect().bottom;
+        const top = Math.max(90, alertBottom + 8) + hh;
+        const bottom = Math.max(top, H - hh - (touch && H > W ? 350 : 120));
+        const right = Math.max(hw, W - hw - (touch ? 110 : 0));
+        const px = THREE.MathUtils.clamp(((x + 1) / 2) * W, hw, right);
+        const py = THREE.MathUtils.clamp(((1 - y) / 2) * H, top, bottom);
         this.monsterTag.style.transform = `translate(${px}px, ${py}px) translate(-50%, -50%)`;
       }
       this.monsterFill.style.width = `${Math.max(0, (monster.hp / monster.maxHp) * 100)}%`;

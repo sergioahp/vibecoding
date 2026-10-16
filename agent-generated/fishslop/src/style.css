@@ -200,8 +200,8 @@ dd {
 #toasts {
   position: absolute;
   top: 130px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 16px;
+  right: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -372,12 +372,12 @@ dd {
   text-align: left;
   padding: 8px 10px;
   border-radius: 6px;
-  background: var(--panel);
+  /* Opaque enough to read over bright sand; what you can afford stands out by its gold edge. */
+  background: rgba(4, 24, 36, 0.88);
   border: 1px solid var(--panel-edge);
   color: var(--ink-dim);
   font: inherit;
   cursor: pointer;
-  opacity: 0.75;
   transition:
     opacity 0.15s,
     border-color 0.15s,
@@ -440,6 +440,10 @@ dd {
 
 .shop-item.maxed .price {
   color: var(--ink-dim);
+}
+
+.shop-item:not(.afford):not(.maxed) .price {
+  opacity: 0.75;
 }
 
 .hints {
@@ -714,7 +718,6 @@ body.touch .desktop-only {
   }
   #toasts {
     top: 196px;
-    width: calc(100% - 32px);
   }
   #shop {
     flex-wrap: wrap;
@@ -872,6 +875,11 @@ body.touch .goals {
   right: 70px;
 }
 
+body.touch .lang {
+  min-height: 44px;
+  padding: 10px 16px;
+}
+
 body.touch #crosshair {
   width: 30px;
   height: 30px;
@@ -971,11 +979,81 @@ body.touch .shop-item .short {
     padding: 5px 6px;
     align-content: center;
   }
+}
+
+/* Narrow and upright, the goals panel drops below the gauges (see the 600px block). */
+@media (orientation: portrait) and (max-width: 600px) {
   body.touch .readouts .depth {
     display: none;
   }
   body.touch .goals {
     right: auto;
+  }
+}
+
+/* Short landscape screens: a compact end card so Play again stays on screen. */
+@media (orientation: landscape) and (max-height: 540px) {
+  .card.small {
+    padding: 16px 24px;
+  }
+  .card.small h2 {
+    font-size: 24px;
+  }
+  .card.small p {
+    margin: 6px 0;
+  }
+  #end-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 24px;
+    margin: 10px 0 14px;
+  }
+  .stats > div {
+    padding-bottom: 3px;
+  }
+  /* Only the newest toast, so the stack never covers the crosshair. */
+  body.touch .toast:nth-child(n + 2) {
+    display: none;
+  }
+}
+
+@media (orientation: portrait) and (max-height: 700px) {
+  body.touch .toast:nth-child(n + 3) {
+    display: none;
+  }
+}
+
+/* Narrow landscape phones: Feed rises above the shop, and the shop takes the room between the
+   stick and the Harpoon button, so its labels fit and no tile sits under a thumb button. */
+@media (orientation: landscape) and (max-width: 720px) {
+  body.touch #t-feed {
+    bottom: calc(var(--pad-b) + 58px + var(--above-shop));
+  }
+  body.touch #shop {
+    left: auto;
+    right: 106px;
+    transform: none;
+    width: calc(100% - 278px);
+  }
+  body.touch .money {
+    min-width: 0;
+  }
+}
+
+/* Short upright phones: Start comes before the how-to, so it's on screen without scrolling. */
+@media (orientation: portrait) and (max-width: 480px) {
+  #overlay-title .card {
+    display: flex;
+    flex-direction: column;
+  }
+  #overlay-title .primary {
+    align-self: flex-start;
+  }
+  #overlay-title .howto {
+    order: 1;
+    margin: 22px 0 0;
+  }
+  #overlay-title .fine {
+    order: 2;
   }
 }
 
