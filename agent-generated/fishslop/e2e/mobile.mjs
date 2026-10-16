@@ -180,9 +180,10 @@ try {
 
   await step('portrait widens the view and moves the controls above the shop', async () => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.waitForTimeout(300);
-    const s = await state();
-    expect(s.fov > 80, `portrait fov should widen, got ${s.fov.toFixed(1)}`);
+    // The resize event fires with the next rendered frame, which CI takes a second or two to draw.
+    await page
+      .waitForFunction(() => window.__fishslop.debugState().fov > 80, null, { timeout: 30_000, polling: 100 })
+      .catch(async () => expect(false, `portrait fov should widen, got ${(await state()).fov.toFixed(1)}`));
     const fire = await page.locator('#t-fire').boundingBox();
     const shop = await page.locator('#shop').boundingBox();
     expect(fire.y + fire.height <= shop.y, 'the harpoon button overlaps the shop');
