@@ -6,6 +6,9 @@ import { chromium } from 'playwright';
 import { preview } from 'vite';
 
 const OUT = fileURLToPath(new URL('./screenshots/', import.meta.url));
+// The HUD redraws once per rendered frame, and CI renders a frame every second or two. Game time
+// is frozen while the test waits (manualClock), so a long wait for a frame changes nothing else.
+const FRAME_WAIT = 30_000;
 
 // In-process server: nothing to orphan when the test ends. strictPort off so a dev server
 // already on 4173 doesn't make the test silently hit stale files.
@@ -114,7 +117,7 @@ try {
       if (t % 4 === 0) for (let i = 0; i < 3; i++) await page.keyboard.press('KeyF');
     });
     if (s.fish < 1) throw new Error('every fish died before the monster came');
-    await page.locator('#alert').waitFor({ state: 'visible', timeout: 3000 });
+    await page.locator('#alert').waitFor({ state: 'visible', timeout: FRAME_WAIT });
     await advance(1.5);
     await page.waitForTimeout(800);
     await page.screenshot({ path: `${OUT}04-monster.png` });
