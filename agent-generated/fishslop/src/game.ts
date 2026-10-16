@@ -21,7 +21,7 @@ import { Bolt, Coin, Fish, Monster, Pellet, type World } from './entities.ts';
 import { Sub } from './sub.ts';
 import { Particles } from './particles.ts';
 import { shopName, stageName, type Hud } from './hud.ts';
-import { t } from './i18n.ts';
+import { num, t } from './i18n.ts';
 import type { Input } from './input.ts';
 import type { Sfx } from './audio.ts';
 
@@ -293,7 +293,8 @@ export class Game {
     const res = tryBuy(this.econ, id, this.aliveFish);
     if (!res.ok) {
       this.sfx.deny();
-      this.hud.toast(res.reason === 'maxed' ? t('toastMaxed', { name: shopName(id) }) : t('toastFunds'), 'bad');
+      const maxed = id === 'guppy' ? t('toastTankFull') : t('toastMaxed', { name: shopName(id) });
+      this.hud.toast(res.reason === 'maxed' ? maxed : t('toastFunds'), 'bad');
       return;
     }
     this.sfx.buy();
@@ -428,7 +429,7 @@ export class Game {
           this.stats.slain++;
           this.sfx.monsterDown();
           this.particles.emit(m.pos, 60, 0xc77dff, 6, 2, 0.4, 1.2);
-          this.hud.toast(t('toastMonsterDown', { n: reward }), 'good');
+          this.hud.toast(t('toastMonsterDown', { n: num(reward) }), 'good');
           this.buzz([40, 30, 120]);
         }
       }

@@ -158,7 +158,7 @@ export class Hud {
     const cap = pelletCap(econ.levels);
     this.pellets.textContent = `${pelletsOut}/${cap}`;
     this.pellets.classList.toggle('full', pelletsOut >= cap);
-    this.depth.textContent = `${depthM.toFixed(1)} m`;
+    this.depth.textContent = `${num(depthM, 1)} m`;
     [...this.eggPips.children].forEach((pip, i) => pip.classList.toggle('on', i < econ.levels.egg));
     // Round up like the warning banner does, so both read the same second.
     this.contact.textContent = monsterUp ? t('contactNow') : contactIn === null ? '--:--' : fmtTime(Math.max(0, Math.ceil(contactIn)));
@@ -176,7 +176,7 @@ export class Hud {
         guppy: t('detailGuppy'),
         food: t('detailFood', { n: foodValue(l) }),
         capacity: t('detailCapacity', { n: cap }),
-        magnet: t('detailMagnet', { n: num(Number(magnetRadius(l).toFixed(1))) }),
+        magnet: t('detailMagnet', { n: num(magnetRadius(l), 1) }),
         harpoon: t('detailHarpoon', { n: harpoonDamage(l) }),
         egg: t('detailEgg', { n: l.egg, m: EGG_PIECES }),
       };

@@ -671,10 +671,9 @@ body.touch .desktop-only {
   .shop-item .detail {
     display: none;
   }
+  /* Longer names (Spanish especially) wrap; the price row stays aligned along the bottom. */
   .shop-item .name {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
   }
 }
 

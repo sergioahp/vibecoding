@@ -17,7 +17,7 @@ const en = {
   monster: 'Monster',
   alertMonster: 'Monster in the tank. Harpoon it: right-click or R',
   alertMonsterTouch: 'Monster in the tank. Hold the harpoon button',
-  alertSonar: 'Sonar contact. Something big arrives in {n}',
+  alertSonar: 'Sonar contact. Something big arrives in {n}s',
   max: 'MAX',
   touchFeed: 'Feed',
   touchFire: 'Harpoon',
@@ -57,9 +57,10 @@ const en = {
   toastKing: 'A king guppy! It drops gems.',
   toastStarved: 'A {stage} starved. Watch for green fish.',
   toastEaten: 'The monster ate a fish!',
-  toastPelletCap: 'Only {n} pellets at once. Upgrade with 3',
-  toastPelletCapTouch: 'Only {n} pellets at once. Buy More pellets',
+  toastPelletCap: 'Only {n} pellets at once. Press 3 for more',
+  toastPelletCapTouch: 'Only {n} pellets at once. Buy Pellets+ in the shop',
   toastMaxed: '{name} is maxed out',
+  toastTankFull: 'The tank is full',
   toastFunds: 'Not enough coins',
   toastGuppy: 'New guppy in the tank',
   toastEgg: 'Egg piece {n} of 3',
@@ -86,7 +87,7 @@ const en = {
   howWinTitle: 'Win',
   howWin: 'Buy all three egg pieces.',
   start: 'Dive in',
-  touchHelp: 'Left thumb steers, drag past the ring to boost. Right thumb looks around.',
+  touchHelp: 'Left thumb steers; drag past the ring to boost. Right thumb looks around.',
   credits: "Inspired by Insaniquarium and Theo's Fishslop benchmark. Built from scratch with Three.js by Claude.",
 
   // Pause and end
@@ -113,15 +114,15 @@ const es: Record<Key, string> = {
   hudPellets: 'Bolitas',
   hudDepth: 'Profundidad',
   hudEgg: 'Huevo',
-  hudContact: 'Próximo contacto',
+  hudContact: 'Contacto en',
   hints:
     '<b>WASD</b> nadar · <b>Mouse</b> mirar · <b>Espacio/C</b> subir/bajar · <b>Shift</b> turbo · <b>Clic/F</b> alimentar · ' +
-    '<b>Clic der./R</b> arpón · <b>1–6</b> tienda · <b>M</b> sonido · <b>Esc</b> pausa',
+    '<b>Clic derecho/R</b> arpón · <b>1–6</b> tienda · <b>M</b> sonido · <b>Esc</b> pausa',
   contactNow: 'CONTACTO',
   monster: 'Monstruo',
   alertMonster: 'Monstruo en la pecera. Arponéalo: clic derecho o R',
-  alertMonsterTouch: 'Monstruo en la pecera. Mantén el botón del arpón',
-  alertSonar: 'Contacto de sonar. Algo grande llega en {n}',
+  alertMonsterTouch: 'Monstruo en la pecera. Mantén presionado Arpón',
+  alertSonar: 'Contacto en el sonar. Algo grande llega en {n} s',
   max: 'MÁX',
   touchFeed: 'Comida',
   touchFire: 'Arpón',
@@ -134,18 +135,18 @@ const es: Record<Key, string> = {
   shopCapacity: 'Más bolitas',
   shopMagnet: 'Imán de monedas',
   shopHarpoon: 'Arpón',
-  shopEgg: 'Pieza de huevo',
+  shopEgg: 'Pieza del huevo',
   shortGuppy: 'Guppy',
   shortFood: 'Comida+',
   shortCapacity: 'Bolitas+',
   shortMagnet: 'Imán+',
   shortHarpoon: 'Arpón+',
   shortEgg: 'Huevo',
-  detailGuppy: 'Alevín. Aliméntalo para que crezca',
-  detailFood: '{n} de crecimiento por bolita',
+  detailGuppy: 'Alevín: aliméntalo',
+  detailFood: 'Crece {n} por bolita',
   detailCapacity: '{n} bolitas a la vez',
-  detailMagnet: 'Atrae a {n} m',
-  detailHarpoon: '{n} de daño por arpón',
+  detailMagnet: 'Alcance: {n} m',
+  detailHarpoon: '{n} de daño por tiro',
   detailEgg: '{n}/{m} piezas',
 
   stage0: 'Alevín',
@@ -157,12 +158,13 @@ const es: Record<Key, string> = {
   toastKing: '¡Un guppy rey! Suelta gemas.',
   toastStarved: 'Un {stage} murió de hambre. Vigila a los peces verdes.',
   toastEaten: '¡El monstruo se comió un pez!',
-  toastPelletCap: 'Solo {n} bolitas a la vez. Mejóralo con el 3',
-  toastPelletCapTouch: 'Solo {n} bolitas a la vez. Compra Más bolitas',
-  toastMaxed: '{name} ya está al máximo',
+  toastPelletCap: 'Solo {n} bolitas a la vez. Sube el límite con el 3',
+  toastPelletCapTouch: 'Solo {n} bolitas a la vez. Compra Bolitas+ en la tienda',
+  toastMaxed: '{name}: nivel máximo',
+  toastTankFull: 'La pecera está llena',
   toastFunds: 'No te alcanzan las monedas',
   toastGuppy: 'Nuevo guppy en la pecera',
-  toastEgg: 'Pieza de huevo {n} de 3',
+  toastEgg: 'Pieza del huevo {n} de 3',
   toastUpgraded: 'Mejora comprada: {name}',
   toastSoundOff: 'Sonido apagado',
   toastSoundOn: 'Sonido encendido',
@@ -175,17 +177,17 @@ const es: Record<Key, string> = {
   howFeedTitle: 'Alimenta',
   howFeed: 'Suelta bolitas con clic o F. Los peces con hambre se ponen verdes; si no comen, mueren.',
   howFeedTouch: 'Toca Comida para soltar bolitas. Los peces con hambre se ponen verdes; si no comen, mueren.',
-  howGrowTitle: 'Crece',
-  howGrow: 'Los alevines se vuelven guppies, guppies grandes y luego reyes. Los peces más grandes sueltan mejores monedas.',
+  howGrowTitle: 'Cría',
+  howGrow: 'Los alevines se vuelven guppies, guppies grandes y luego reyes. Los peces más grandes sueltan monedas más valiosas.',
   howCollectTitle: 'Recoge',
-  howCollect: 'Nada cerca de las monedas para recogerlas antes de que se desvanezcan en la arena.',
+  howCollect: 'Acércate a las monedas para recogerlas antes de que desaparezcan en la arena.',
   howDefendTitle: 'Defiende',
   howDefend: 'Los monstruos llegan cada cierto tiempo. Arponéalos con clic derecho o R.',
-  howDefendTouch: 'Los monstruos llegan cada cierto tiempo. Mantén Arpón para dispararles.',
+  howDefendTouch: 'Los monstruos llegan cada cierto tiempo. Mantén presionado Arpón para dispararles.',
   howWinTitle: 'Gana',
   howWin: 'Compra las tres piezas del huevo.',
   start: '¡Al agua!',
-  touchHelp: 'El pulgar izquierdo dirige; arrastra más allá del aro para el turbo. El derecho mira alrededor.',
+  touchHelp: 'El pulgar izquierdo maneja; arrástralo más allá del aro para usar el turbo. Con el derecho, mira alrededor.',
   credits: 'Inspirado en Insaniquarium y en el benchmark Fishslop de Theo. Hecho desde cero con Three.js por Claude.',
 
   paused: 'En pausa',
@@ -196,7 +198,7 @@ const es: Record<Key, string> = {
   wonTitle: 'El huevo eclosionó',
   wonBody: 'Las tres piezas del huevo son tuyas. Lo que había dentro está muy contento contigo.',
   lostTitle: 'La pecera quedó en silencio',
-  lostBody: 'No quedan peces ni monedas para comprar otro. Tarde o temprano, todo cuidador pierde una pecera.',
+  lostBody: 'No quedan peces ni monedas suficientes para comprar otro. Tarde o temprano, todo cuidador pierde una pecera.',
   statTime: 'Tiempo',
   statEarned: 'Monedas ganadas',
   statSlain: 'Monstruos arponeados',
@@ -210,11 +212,14 @@ const STORE = 'fishslop.lang';
 const isLang = (v: unknown): v is Lang => v === 'en' || v === 'es';
 
 function preferred(): string[] {
-  return navigator.languages?.length ? [...navigator.languages] : [navigator.language];
+  return (navigator.languages?.length ? [...navigator.languages] : [navigator.language]).filter(Boolean);
 }
 
+/** The base language of a tag, also for Linux-style tags such as es_MX. */
+const baseOf = (tag: string) => tag.toLowerCase().split(/[-_]/)[0];
+
 export function detectLang(): Lang {
-  const q = new URLSearchParams(location.search).get('lang');
+  const q = baseOf(new URLSearchParams(location.search).get('lang') ?? '');
   if (isLang(q)) return q;
   try {
     const saved = localStorage.getItem(STORE);
@@ -223,7 +228,7 @@ export function detectLang(): Lang {
     // Storage blocked: fall through to the browser languages.
   }
   for (const tag of preferred()) {
-    const base = tag.toLowerCase().split('-')[0];
+    const base = baseOf(tag);
     if (isLang(base)) return base;
   }
   return 'en';
@@ -236,12 +241,13 @@ let touch = false;
 let numberLocale = '';
 
 function refreshLocale() {
-  numberLocale = lang;
+  // Without a regional tag to go on, Spanish formats like Latin America (12,345.6), not Spain (12.345,6).
+  numberLocale = lang === 'es' ? 'es-419' : lang;
   for (const tag of preferred()) {
-    if (tag.toLowerCase().split('-')[0] !== lang) continue;
+    if (baseOf(tag) !== lang) continue;
     try {
       // Browsers can report tags Intl rejects (Linux gives en-US@posix), which would throw on every format.
-      numberLocale = Intl.getCanonicalLocales(tag)[0];
+      numberLocale = Intl.getCanonicalLocales(tag.replace(/_/g, '-'))[0];
       return;
     } catch {
       // Try the next one.
@@ -257,11 +263,15 @@ export function t(key: Key, params: Record<string, string | number> = {}): strin
   return s.replace(/\{(\w+)\}/g, (_, p: string) => String(params[p] ?? `{${p}}`));
 }
 
-export const num = (n: number) => n.toLocaleString(numberLocale);
+/** A number in the player's format, optionally with a fixed count of decimals. */
+export const num = (n: number, decimals?: number) =>
+  n.toLocaleString(numberLocale, decimals === undefined ? undefined : { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
 /** Fills every [data-i18n] (text) and [data-i18n-html] (our own markup) element. */
 export function applyStatic(root: ParentNode = document) {
   document.documentElement.lang = lang;
+  // The switch is labelled in the other language, so screen readers should read it that way.
+  document.getElementById('lang')?.setAttribute('lang', lang === 'en' ? 'es' : 'en');
   root.querySelectorAll<HTMLElement>('[data-i18n]').forEach((el) => (el.textContent = t(el.dataset.i18n as Key)));
   root.querySelectorAll<HTMLElement>('[data-i18n-html]').forEach((el) => (el.innerHTML = t(el.dataset.i18nHtml as Key)));
   root.querySelectorAll<HTMLElement>('[data-i18n-label]').forEach((el) => el.setAttribute('aria-label', t(el.dataset.i18nLabel as Key)));
@@ -274,6 +284,12 @@ export function setLang(next: Lang) {
     localStorage.setItem(STORE, next);
   } catch {
     // Not remembered, which is fine.
+  }
+  // A ?lang= in the address would win over this choice on the next visit, so drop it.
+  const url = new URL(location.href);
+  if (url.searchParams.has('lang')) {
+    url.searchParams.delete('lang');
+    history.replaceState(history.state, '', url);
   }
   applyStatic();
 }
