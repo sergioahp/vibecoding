@@ -47,9 +47,17 @@ try {
   const page = await phone.newPage();
   watch(page);
   const cdp = await phone.newCDPSession(page);
-  // Each finger is [id, x, y]; send every finger still down, as a real touch screen does.
+  // Each finger is [id, x, y]. touchStart and touchMove list every finger that is down; touchEnd
+  // lists the fingers that lift, and an empty touchEnd lifts them all.
   const touch = (type, fingers) =>
     cdp.send('Input.dispatchTouchEvent', { type, touchPoints: fingers.map(([id, x, y]) => ({ id, x, y })) });
+  // Fixed touch points must land on the 3D scene, not on a button or the shop, or the step tests the wrong thing.
+  const onScene = async (...points) => {
+    for (const [x, y] of points) {
+      const id = await page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.id, [x, y]);
+      expect(id === 'scene', `touch point (${x}, ${y}) lands on #${id}, not on the scene`);
+    }
+  };
   const state = () => page.evaluate(() => window.__fishslop.debugState());
   const advance = (s) => page.evaluate((s) => window.__fishslop.advance(s), s);
   const centre = async (sel) => {
@@ -81,7 +89,8 @@ try {
     const card = await page.locator('#overlay-title .card').boundingBox();
     expect(card.x >= 0 && card.x + card.width <= 390, 'the title card is wider than the phone');
     await page.locator('#start').scrollIntoViewIfNeeded();
-    expect(await page.locator('#start').isVisible(), 'the start button is out of reach');
+    const start = await page.locator('#start').boundingBox();
+    expect(start.y >= 0 && start.y + start.height <= 844, `the start button is out of reach at y=${start.y}`);
     await page.screenshot({ path: `${OUT}mobile-01b-title-portrait.png` });
     await page.setViewportSize({ width: 844, height: 390 });
   });
@@ -97,6 +106,7 @@ try {
   });
 
   await step('the left thumb drives the sub forward', async () => {
+    await onScene([130, 260], [130, 200], [190, 260], [130, 160], [640, 160], [540, 160]);
     const before = (await state()).sub;
     await touch('touchStart', [[1, 130, 260]]);
     await touch('touchMove', [[1, 130, 200]]);
@@ -169,6 +179,43 @@ try {
     await page.screenshot({ path: `${OUT}mobile-02-play-landscape.png` });
   });
 
+  await step('the shop and Resume still answer while a thumb rests on the stick', async () => {
+    // Browsers don't turn a tap into a click while another finger is down, so these act on the lift.
+    await page.evaluate(() => (window.__fishslop.econ.money += 100));
+    const before = await state();
+    const [gx, gy] = await centre('.shop-item[data-id="guppy"]');
+    await touch('touchStart', [[1, 130, 260]]);
+    await touch('touchStart', [[1, 130, 260], [2, gx, gy]]);
+    await touch('touchEnd', [[2, gx, gy]]);
+    const bought = await state();
+    expect(bought.fish === before.fish + 1, `a shop tap with the stick held bought nothing: fish ${before.fish} -> ${bought.fish}`);
+    const [px, py] = await centre('#t-pause');
+    await touch('touchStart', [[1, 130, 260], [3, px, py]]);
+    await touch('touchEnd', [[3, px, py]]);
+    await page.locator('#overlay-pause').waitFor({ state: 'visible', timeout: 3000 });
+    const [rx, ry] = await centre('#resume');
+    await touch('touchStart', [[1, 130, 260], [4, rx, ry]]);
+    await touch('touchEnd', [[4, rx, ry]]);
+    await touch('touchEnd', []);
+    const resumed = await state();
+    expect(resumed.state === 'playing', `Resume with a finger resting on the screen left the game ${resumed.state}`);
+  });
+
+  await step('dragging to look while paused does not swing the view on Resume', async () => {
+    const yaw0 = (await state()).yaw;
+    await touch('touchStart', [[5, 640, 160]]);
+    const [px, py] = await centre('#t-pause');
+    await touch('touchStart', [[5, 640, 160], [6, px, py]]);
+    await touch('touchEnd', [[6, px, py]]);
+    await touch('touchMove', [[5, 440, 160]]);
+    const [rx, ry] = await centre('#resume');
+    await touch('touchStart', [[5, 440, 160], [7, rx, ry]]);
+    await touch('touchEnd', [[7, rx, ry]]);
+    await touch('touchEnd', []);
+    const yaw1 = (await advance(0.1)).yaw;
+    expect(Math.abs(yaw1 - yaw0) < 0.05, `the view swung ${(yaw1 - yaw0).toFixed(2)} rad from a drag made while paused`);
+  });
+
   await step('the pause button pauses and resume continues', async () => {
     await page.tap('#t-pause');
     await page.locator('#overlay-pause').waitFor({ state: 'visible', timeout: 3000 });
@@ -193,6 +240,7 @@ try {
   });
 
   await step('held upright, the thumbs still drive, look, feed and fire', async () => {
+    await onScene([100, 600], [100, 540], [300, 300], [230, 300]);
     const s0 = await state();
     await touch('touchStart', [[1, 100, 600]]);
     await touch('touchStart', [[1, 100, 600], [2, 300, 300]]);

@@ -111,21 +111,30 @@ try {
       <div class="play">Play free in your browser · Juega gratis</div>
     </div>`);
   await card.evaluate(() => document.fonts.ready);
+  const fontsOk = await card.evaluate(() => document.fonts.check("112px Bungee") && document.fonts.check("600 31px 'Chakra Petch'"));
+  if (!fontsOk) throw new Error('Bungee or Chakra Petch did not load from Google Fonts; the card would use fallback fonts');
   await card.screenshot({ path: `${PUBLIC}og.jpg`, type: 'jpeg', quality: 84 });
 
   // App icons: full-bleed squares, since Android and iOS round the corners themselves.
-  const svg = (await readFile(`${PUBLIC}icon.svg`, 'utf8')).replace('rx="14"', 'rx="0"');
-  for (const [name, size] of [
-    ['icon-192.png', 192],
-    ['icon-512.png', 512],
-    ['apple-touch-icon.png', 180],
+  const source = await readFile(`${PUBLIC}icon.svg`, 'utf8');
+  if (!source.includes('rx="14"')) throw new Error('icon.svg changed: update how make-images squares its corners');
+  const square = source.replace('rx="14"', 'rx="0"');
+  // Android may crop a maskable icon to a circle 80% wide, so that one shrinks the art into the middle.
+  const maskable = square
+    .replace(/(<rect class="bg"[^>]*\/>)/, '$1<g transform="translate(32 32) scale(0.78) translate(-32 -32)">')
+    .replace('</svg>', '</g></svg>');
+  for (const [name, size, svg] of [
+    ['icon-192.png', 192, square],
+    ['icon-512.png', 512, square],
+    ['icon-maskable-512.png', 512, maskable],
+    ['apple-touch-icon.png', 180, square],
   ]) {
     const p = await browser.newPage({ viewport: { width: size, height: size } });
     await p.setContent(`<style>html,body{margin:0}svg{display:block;width:${size}px;height:${size}px}</style>${svg}`);
     await writeFile(`${PUBLIC}${name}`, await p.screenshot({ type: 'png', omitBackground: true }));
     await p.close();
   }
-  console.log('wrote public/og.jpg, icon-192.png, icon-512.png, apple-touch-icon.png');
+  console.log('wrote public/og.jpg, icon-192.png, icon-512.png, icon-maskable-512.png, apple-touch-icon.png');
 } finally {
   await browser.close();
   await server.close();

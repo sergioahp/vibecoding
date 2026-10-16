@@ -3,7 +3,7 @@ import { Game } from './game.ts';
 import { Hud } from './hud.ts';
 import { Input } from './input.ts';
 import { Sfx } from './audio.ts';
-import { TouchControls } from './touch.ts';
+import { TouchControls, onPress } from './touch.ts';
 import { applyStatic, lang, setLang, setTouchWording } from './i18n.ts';
 
 const canvas = document.getElementById('scene') as HTMLCanvasElement;
@@ -26,8 +26,10 @@ input.onModeChange = (on) => {
   document.body.classList.toggle('touch', on);
   setTouchWording(on);
   touch.release();
+  // A lock kept from mouse play would trap the cursor once the player reaches for the mouse again.
+  if (on && document.pointerLockElement) document.exitPointerLock();
   // Switching to the mouse mid-run needs pointer lock, which takes a click on Resume.
-  if (!on && !input.locked) game.pause();
+  if (!on && input.needsLock && !input.locked) game.pause();
 };
 
 /** On phones, hide the browser bars for more tank. Either orientation works, so it isn't locked. */
@@ -42,12 +44,20 @@ const play = () => {
   goFullscreen();
   game.start();
 };
-document.getElementById('start')!.addEventListener('click', play);
-document.getElementById('restart')!.addEventListener('click', play);
-document.getElementById('resume')!.addEventListener('click', () => game.resume());
-document.getElementById('lang')!.addEventListener('click', () => {
+onPress(document.getElementById('start')!, play);
+onPress(document.getElementById('restart')!, play);
+onPress(document.getElementById('resume')!, () => {
+  goFullscreen();
+  game.resume();
+});
+onPress(document.getElementById('lang')!, () => {
   setLang(lang === 'en' ? 'es' : 'en');
   hud.relabel();
+});
+// Leaving fullscreen on a phone (Android's back gesture) usually means stepping away, so pause.
+// Resume asks for fullscreen again.
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement && input.touch) game.pause();
 });
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) return;

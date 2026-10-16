@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "node --test --experimental-strip-types \"src/**/*.test.ts\"",
     "bot": "node --experimental-strip-types e2e/bot.mjs",
-    "images": "node scripts/make-images.mjs"
+    "images": "node scripts/make-images.mjs",
+    "video": "node --experimental-strip-types scripts/record-video.mjs"
   },
   "dependencies": {
     "three": "0.186.1"

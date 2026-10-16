@@ -28,7 +28,8 @@ import type { Sfx } from './audio.ts';
 type State = 'title' | 'playing' | 'paused' | 'over' | 'won';
 
 const FAR = new THREE.Vector3(0, -999, 0);
-/** Narrowest horizontal field of view, so a phone held upright still sees around the sub. */
+/** Horizontal field of view to aim for when the screen is taller than wide. The vertical field of
+ * view stops at 90° before fisheye sets in, so the tallest phones get a little under this. */
 const MIN_HFOV = THREE.MathUtils.degToRad(58);
 const BASE_FOV = 62;
 
@@ -60,6 +61,8 @@ export class Game {
   private pixelRatio = Math.min(window.devicePixelRatio, 2);
   private frameAvg = 1 / 60;
   private slowFor = 0;
+  private adapting = true;
+  private avgBeforeDrop = 0;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -143,18 +146,31 @@ export class Game {
 
   /** Drops the render resolution while frames run slow, down to one pixel per CSS pixel. */
   private adaptQuality(dt: number) {
+    if (!this.adapting) return;
     this.frameAvg += (dt - this.frameAvg) * 0.05;
-    if (this.frameAvg < 1 / 40 || this.pixelRatio <= 1) {
+    // Under about 26 fps. Phones capped at 30 fps (iOS Low Power Mode, Chrome Energy Saver) sit at
+    // 33 ms a frame whatever the resolution, so they stay above this line and keep full detail.
+    if (this.frameAvg < 1 / 26 || this.pixelRatio <= 1) {
       this.slowFor = 0;
       return;
     }
     this.slowFor += dt;
     if (this.slowFor < 2) return;
-    this.pixelRatio = Math.max(1, this.pixelRatio - 0.25);
-    this.renderer.setPixelRatio(this.pixelRatio);
-    this.resize();
     this.slowFor = 0;
-    this.frameAvg = 1 / 60;
+    if (this.avgBeforeDrop && this.frameAvg > this.avgBeforeDrop * 0.9) {
+      // The last drop bought nothing, so the bottleneck is elsewhere: put it back and stop trying.
+      this.setPixelRatio(this.pixelRatio + 0.25);
+      this.adapting = false;
+      return;
+    }
+    this.avgBeforeDrop = this.frameAvg;
+    this.setPixelRatio(Math.max(1, this.pixelRatio - 0.25));
+  }
+
+  private setPixelRatio(ratio: number) {
+    this.pixelRatio = ratio;
+    this.renderer.setPixelRatio(ratio);
+    this.resize();
   }
 
   private get aliveFish() {
@@ -213,6 +229,7 @@ export class Game {
     this.warned = false;
     this.stats = { earned: 0, slain: 0, lost: 0, kings: 0 };
     this.state = 'playing';
+    this.input.consumeLook();
     this.hud.overlay(null);
     this.hud.show(true);
     this.camera.position.set(0, 8.5, 12);
@@ -231,6 +248,7 @@ export class Game {
     this.sfx.unlock();
     if (!this.input.needsLock) {
       this.state = 'playing';
+      this.input.consumeLook();
       this.hud.overlay(null);
     } else {
       this.input.requestLock();
@@ -240,6 +258,7 @@ export class Game {
   onLockChange(locked: boolean) {
     if (locked && this.state === 'paused') {
       this.state = 'playing';
+      this.input.consumeLook();
       this.hud.overlay(null);
     } else if (!locked && this.state === 'playing' && this.input.needsLock) {
       this.pause();

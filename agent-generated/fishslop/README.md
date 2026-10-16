@@ -23,7 +23,7 @@ npm run images      # re-renders the link preview and icons into public/ (needs 
 
 **Keyboard and mouse:** WASD swim, mouse look, Space/C up and down, Shift boost, click or F to drop food, right-click or R to fire the harpoon, 1–6 to buy, M to mute, Esc to pause.
 
-**Touch:** the left thumb steers with a stick that appears where it lands (up drives, sideways turns, drag past the ring to boost). The right thumb drags to look. Buttons feed, fire (hold for repeat), rise, sink and pause; tap the shop to buy. The harpoon locks on from a wider angle than with a mouse, and Android phones buzz on buys, hits and losses.
+**Touch:** the left thumb steers with a stick that appears where it lands (up drives, sideways turns, drag past the ring to boost). The right thumb drags to look. Buttons feed, fire (hold for repeat), rise, sink and pause; tap the shop to buy. The harpoon locks on from a wider angle than with a mouse, and with sound on, Android phones buzz on buys, harpoon hits, and when the monster eats a fish.
 
 The game picks touch controls when the device's main pointer is a finger (`(pointer: coarse)`), and switches whenever the player taps or clicks with the other kind. It works held either way: in portrait the view widens and the controls move above the shop. On a phone, Dive in also goes fullscreen where the browser allows it (Android; iPhone Safari doesn't). Added to the home screen, it opens from its own icon without the browser bars.
 
@@ -48,7 +48,8 @@ English and Spanish. The game reads `navigator.languages` and uses the first one
 | `src/i18n.ts` | English and Spanish strings, language detection. |
 | `e2e/smoke.mjs` | Headless play-through used by CI. |
 | `e2e/mobile.mjs` | Touch and Spanish play-through used by CI. |
-| `e2e/bot.mjs` | Scripted player for balance testing. |
+| `e2e/player.mjs` | The scripted player: feeds, shops, fights. Runs inside the page. |
+| `e2e/bot.mjs` | Plays whole games with it and reports the balance. |
 | `scripts/make-images.mjs` | Renders the link preview and icons. |
 
 ## CI and deploy

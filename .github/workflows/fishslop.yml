@@ -22,7 +22,8 @@ concurrency:
 defaults:
   run:
     working-directory: agent-generated/fishslop
-    # Naming the shell switches on pipefail, so `cmd | tee log` fails when cmd does.
+    # Naming the shell switches on pipefail, so `cmd | tee log` fails when cmd does. The steps send
+    # stderr to the log too, so the job summary shows why a test failed.
     shell: bash
 
 jobs:
@@ -67,15 +68,15 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Smoke test
-        run: node e2e/smoke.mjs | tee smoke.log
+        run: node e2e/smoke.mjs 2>&1 | tee smoke.log
       - name: Phone test, touch controls in Spanish, landscape and portrait
-        run: node e2e/mobile.mjs | tee mobile.log
+        run: node e2e/mobile.mjs 2>&1 | tee mobile.log
       # A scripted player runs whole games. These fail if a balance change makes the
       # game unwinnable, or makes upgrades pointless.
       - name: Balance check, a sensible player wins within 15 minutes
-        run: npm run -s bot -- sensible 900 --expect=win | tee bot-sensible.log
+        run: npm run -s bot -- sensible 900 --expect=win 2>&1 | tee bot-sensible.log
       - name: Balance check, rushing eggs without upgrades does not win
-        run: npm run -s bot -- eggrush 900 --expect=no-win | tee bot-eggrush.log
+        run: npm run -s bot -- eggrush 900 --expect=no-win 2>&1 | tee bot-eggrush.log
       - name: Summary
         if: always()
         run: |

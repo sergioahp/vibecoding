@@ -11,6 +11,7 @@ import {
   type ShopId,
 } from './rules.ts';
 import { num, t, type Key } from './i18n.ts';
+import { onPress } from './touch.ts';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => {
   const el = document.getElementById(id);
@@ -80,10 +81,7 @@ export class Hud {
       b.className = 'shop-item';
       b.dataset.id = item.id;
       b.innerHTML = `<span class="key">${item.key}</span><span class="name"></span><span class="short"></span><span class="detail"></span><span class="price"></span>`;
-      b.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.onBuy(item.id);
-      });
+      onPress(b, () => this.onBuy(item.id));
       shop.append(b);
       this.buttons.set(item.id, b);
     }

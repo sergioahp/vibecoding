@@ -10,6 +10,32 @@ const LOOK_SCALE = 2.2;
 /** Touches that start left of this fraction of the screen move the stick; the rest look around. */
 const STICK_ZONE = 0.45;
 
+/**
+ * Runs fn when the button is clicked, or when a finger lifts off it. Browsers only turn a tap into
+ * a click when it is the only finger down, so a thumb resting on the stick would swallow taps on
+ * the shop or Resume. The click that may follow a handled tap is ignored, so nothing runs twice.
+ */
+export function onPress(el: HTMLElement, fn: () => void) {
+  const fingers = new Set<number>();
+  let tappedAt = -Infinity;
+  el.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'mouse') fingers.add(e.pointerId);
+  });
+  el.addEventListener('pointercancel', (e) => fingers.delete(e.pointerId));
+  el.addEventListener('pointerup', (e) => {
+    if (!fingers.delete(e.pointerId)) return;
+    // A finger keeps reporting to the button it started on, so check it lifted over the button.
+    const r = el.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
+    tappedAt = e.timeStamp;
+    fn();
+  });
+  el.addEventListener('click', (e) => {
+    if (e.timeStamp - tappedAt < 800) return;
+    fn();
+  });
+}
+
 export interface TouchActions {
   /** Whether a run is in progress; outside of one, touches on the scene do nothing. */
   playing(): boolean;
@@ -94,7 +120,9 @@ export class TouchControls {
       const k = dist > RADIUS ? RADIUS / dist : 1;
       this.knob.style.transform = `translate(${dx * k}px, ${dy * k}px)`;
     } else if (e.pointerId === this.lookId) {
-      this.input.addLook((e.clientX - this.last.x) * LOOK_SCALE, (e.clientY - this.last.y) * LOOK_SCALE);
+      // A drag while paused or after a run would otherwise snap the view on Resume or Play again.
+      if (this.actions.playing())
+        this.input.addLook((e.clientX - this.last.x) * LOOK_SCALE, (e.clientY - this.last.y) * LOOK_SCALE);
       this.last.x = e.clientX;
       this.last.y = e.clientY;
     }
