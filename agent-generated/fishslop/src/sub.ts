@@ -48,18 +48,20 @@ export class Sub {
 
   update(dt: number, input: Input, colliders: Collider[]) {
     const [dx, dy] = input.consumeLook();
-    const turnKeys = input.axis(['ArrowRight'], ['ArrowLeft']);
+    const stick = input.stick;
+    // The stick steers like a boat: sideways turns, up and down drive.
+    const turn = THREE.MathUtils.clamp(input.axis(['ArrowRight'], ['ArrowLeft']) - stick.x, -1, 1);
     const pitchKeys = input.axis(['ArrowDown'], ['ArrowUp']);
     this.yaw -= dx * LOOK_SENS;
-    this.yaw += turnKeys * 2.2 * dt;
+    this.yaw += turn * 2.2 * dt;
     this.pitch -= dy * LOOK_SENS;
     this.pitch += pitchKeys * 1.6 * dt;
     this.pitch = THREE.MathUtils.clamp(this.pitch, -1.15, 1.15);
 
-    const fwd = input.axis(['KeyS'], ['KeyW']);
+    const fwd = THREE.MathUtils.clamp(input.axis(['KeyS'], ['KeyW']) + stick.y, -1, 1);
     const strafe = input.axis(['KeyA'], ['KeyD']);
     const vert = input.axis(['KeyC', 'KeyQ'], ['Space', 'KeyE']);
-    const boost = input.keys.has('ShiftLeft') || input.keys.has('ShiftRight');
+    const boost = input.keys.has('ShiftLeft') || input.keys.has('ShiftRight') || stick.boost;
 
     const dir = this.forward().multiplyScalar(fwd).add(this.right().multiplyScalar(strafe));
     dir.y += vert;
@@ -99,7 +101,7 @@ export class Sub {
     const root = this.model.root;
     root.rotation.y = this.yaw;
     root.rotation.x = -this.pitch;
-    this.roll = THREE.MathUtils.damp(this.roll, -strafe * 0.35 + dx * 0.004, 5, dt);
+    this.roll = THREE.MathUtils.damp(this.roll, -strafe * 0.35 + dx * 0.004 - turn * 0.2, 5, dt);
     this.model.hull.rotation.z = this.roll;
     this.propSpin += dt * (4 + this.thrust * (boost ? 40 : 25));
     this.model.prop.rotation.z = this.propSpin;

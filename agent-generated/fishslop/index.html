@@ -2,9 +2,25 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Fishslop</title>
     <meta name="description" content="Pilot a feeding submarine through a 3D aquarium. Grow guppies, collect their coins, and harpoon the monsters." />
+    <meta name="theme-color" content="#0b5470" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <!-- Link previews (WhatsApp, Slack, Discord, X). Crawlers need absolute image URLs. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Fishslop" />
+    <meta property="og:title" content="Fishslop" />
+    <meta property="og:description" content="Pilot a feeding submarine through a 3D aquarium. Grow guppies, collect their coins, and harpoon the monsters." />
+    <meta property="og:url" content="https://sergioahp.github.io/vibecoding/fishslop/" />
+    <meta property="og:image" content="https://sergioahp.github.io/vibecoding/fishslop/og.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="A yellow submarine harpooning a purple monster in an aquarium full of guppies and coins." />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -19,15 +35,15 @@
       <div class="panel gauges">
         <div class="money"><span class="coin-icon" aria-hidden="true"></span><span id="money">0</span></div>
         <dl class="readouts">
-          <div><dt>Fish</dt><dd id="fish-count">0</dd></div>
-          <div><dt>Pellets</dt><dd id="pellets">0/3</dd></div>
-          <div><dt>Depth</dt><dd id="depth">0 m</dd></div>
+          <div><dt data-i18n="hudFish">Fish</dt><dd id="fish-count">0</dd></div>
+          <div><dt data-i18n="hudPellets">Pellets</dt><dd id="pellets">0/3</dd></div>
+          <div class="depth"><dt data-i18n="hudDepth">Depth</dt><dd id="depth">0 m</dd></div>
         </dl>
       </div>
 
       <div class="panel goals">
-        <div><dt>Egg</dt><dd id="egg-pips" class="pips"></dd></div>
-        <div><dt>Next contact</dt><dd id="contact">--:--</dd></div>
+        <div><dt data-i18n="hudEgg">Egg</dt><dd id="egg-pips" class="pips"></dd></div>
+        <div><dt data-i18n="hudContact">Next contact</dt><dd id="contact">--:--</dd></div>
       </div>
 
       <div id="alert" hidden></div>
@@ -35,40 +51,42 @@
       <div id="crosshair" aria-hidden="true"></div>
       <div id="labels"></div>
 
+      <div id="touch" class="touch-only">
+        <div id="stick" aria-hidden="true"><div id="stick-knob"></div></div>
+        <button id="t-pause" type="button" class="t-btn" data-i18n-label="touchPause"><span aria-hidden="true">II</span></button>
+        <button id="t-up" type="button" class="t-btn" data-i18n-label="touchUp"><span aria-hidden="true">▲</span></button>
+        <button id="t-down" type="button" class="t-btn" data-i18n-label="touchDown"><span aria-hidden="true">▼</span></button>
+        <button id="t-feed" type="button" class="t-btn" data-i18n="touchFeed">Feed</button>
+        <button id="t-fire" type="button" class="t-btn" data-i18n="touchFire">Harpoon</button>
+      </div>
+
       <div id="shop"></div>
-      <p class="hints">
-        <b>WASD</b> swim · <b>Mouse</b> look · <b>Space/C</b> up/down · <b>Shift</b> boost · <b>Click/F</b> feed ·
-        <b>Right-click/R</b> harpoon · <b>1–6</b> shop · <b>M</b> sound · <b>Esc</b> pause
-      </p>
+      <p class="hints desktop-only" data-i18n-html="hints"></p>
     </div>
 
     <section id="overlay-title" class="overlay">
       <div class="card">
+        <button id="lang" type="button" class="lang" data-i18n="otherLang" data-i18n-label="otherLangLabel">Español</button>
         <h1 class="logo">Fishslop</h1>
-        <p class="tagline">
-          You pilot the feeding sub. Keep the guppies fed, grow them, scoop up what they drop, and harpoon whatever
-          comes through the glass.
-        </p>
+        <p class="tagline" data-i18n="tagline"></p>
         <ul class="howto">
-          <li><span>Feed</span>Drop pellets with click or F. Hungry fish turn green; starving ones die.</li>
-          <li><span>Grow</span>Fry become guppies, big guppies, then kings. Bigger fish drop richer coins.</li>
-          <li><span>Collect</span>Swim near coins to scoop them up before they fade on the sand.</li>
-          <li><span>Defend</span>Monsters arrive on a timer. Harpoon them with right-click or R.</li>
-          <li><span>Win</span>Buy all three egg pieces.</li>
+          <li><b data-i18n="howFeedTitle">Feed</b><span data-i18n="howFeed"></span></li>
+          <li><b data-i18n="howGrowTitle">Grow</b><span data-i18n="howGrow"></span></li>
+          <li><b data-i18n="howCollectTitle">Collect</b><span data-i18n="howCollect"></span></li>
+          <li><b data-i18n="howDefendTitle">Defend</b><span data-i18n="howDefend"></span></li>
+          <li><b data-i18n="howWinTitle">Win</b><span data-i18n="howWin"></span></li>
         </ul>
-        <button id="start" type="button" class="primary">Dive in</button>
-        <p class="fine touch-only">Needs a keyboard and mouse.</p>
-        <p class="fine">
-          Inspired by Insaniquarium and Theo's Fishslop benchmark. Built from scratch with Three.js by Claude.
-        </p>
+        <button id="start" type="button" class="primary" data-i18n="start">Dive in</button>
+        <p class="fine touch-only touch-help" data-i18n="touchHelp"></p>
+        <p class="fine" data-i18n="credits"></p>
       </div>
     </section>
 
     <section id="overlay-pause" class="overlay" hidden>
       <div class="card small">
-        <h2>Paused</h2>
-        <p>You can still shop with the buttons below or keys 1–6.</p>
-        <button id="resume" type="button" class="primary">Resume</button>
+        <h2 data-i18n="paused">Paused</h2>
+        <p data-i18n="pausedBody"></p>
+        <button id="resume" type="button" class="primary" data-i18n="resume">Resume</button>
       </div>
     </section>
 
@@ -77,7 +95,7 @@
         <h2 id="end-title"></h2>
         <p id="end-sub"></p>
         <dl id="end-stats" class="stats"></dl>
-        <button id="restart" type="button" class="primary">Play again</button>
+        <button id="restart" type="button" class="primary" data-i18n="restart">Play again</button>
       </div>
     </section>
 

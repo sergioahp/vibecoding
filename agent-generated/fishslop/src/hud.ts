@@ -10,6 +10,7 @@ import {
   type Economy,
   type ShopId,
 } from './rules.ts';
+import { num, t, type Key } from './i18n.ts';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => {
   const el = document.getElementById(id);
@@ -35,6 +36,19 @@ interface Floater {
 }
 
 const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+const SHOP_NAME: Record<ShopId, Key> = {
+  guppy: 'shopGuppy',
+  food: 'shopFood',
+  capacity: 'shopCapacity',
+  magnet: 'shopMagnet',
+  harpoon: 'shopHarpoon',
+  egg: 'shopEgg',
+};
+
+export const shopName = (id: ShopId) => t(SHOP_NAME[id]);
+const shortName = (id: ShopId) => t(`short${SHOP_NAME[id].slice(4)}` as Key);
+export const stageName = (stage: number) => t(`stage${stage}` as Key);
 
 export class Hud {
   onBuy: (id: ShopId) => void = () => {};
@@ -65,7 +79,7 @@ export class Hud {
       b.type = 'button';
       b.className = 'shop-item';
       b.dataset.id = item.id;
-      b.innerHTML = `<span class="key">${item.key}</span><span class="name">${item.name}</span><span class="detail"></span><span class="price"></span>`;
+      b.innerHTML = `<span class="key">${item.key}</span><span class="name"></span><span class="short"></span><span class="detail"></span><span class="price"></span>`;
       b.addEventListener('click', (e) => {
         e.stopPropagation();
         this.onBuy(item.id);
@@ -78,10 +92,22 @@ export class Hud {
     this.monsterTag = document.createElement('div');
     this.monsterTag.className = 'monster-tag';
     this.monsterTag.hidden = true;
-    this.monsterTag.innerHTML = '<span class="arrow"></span><span class="name">Monster</span><div class="monster-bar"><div></div></div>';
+    this.monsterTag.innerHTML = '<span class="arrow"></span><span class="name"></span><div class="monster-bar"><div></div></div>';
     this.monsterArrow = this.monsterTag.querySelector('.arrow')!;
     this.monsterFill = this.monsterTag.querySelector('.monster-bar > div')!;
     this.labels.append(this.monsterTag);
+    this.relabel();
+  }
+
+  /** Re-reads the strings built in code, after a language change. */
+  relabel() {
+    for (const [id, b] of this.buttons) {
+      b.querySelector('.name')!.textContent = shopName(id);
+      b.querySelector('.short')!.textContent = shortName(id);
+      b.title = shopName(id);
+    }
+    this.monsterTag.querySelector('.name')!.textContent = t('monster');
+    this.lastMoney = -1;
   }
 
   show(on: boolean) {
@@ -95,16 +121,14 @@ export class Hud {
   }
 
   end(s: EndStats) {
-    $('end-title').textContent = s.won ? 'The egg hatched' : 'The tank went quiet';
-    $('end-sub').textContent = s.won
-      ? 'All three egg pieces are yours. Whatever was inside is very pleased with you.'
-      : 'No fish left and not enough coins for another. Every keeper loses a tank eventually.';
+    $('end-title').textContent = t(s.won ? 'wonTitle' : 'lostTitle');
+    $('end-sub').textContent = t(s.won ? 'wonBody' : 'lostBody');
     $('end-stats').innerHTML = [
-      ['Time', fmtTime(s.time)],
-      ['Coins earned', s.earned.toLocaleString()],
-      ['Monsters harpooned', String(s.slain)],
-      ['King guppies raised', String(s.kings)],
-      ['Fish lost', String(s.lost)],
+      [t('statTime'), fmtTime(s.time)],
+      [t('statEarned'), num(s.earned)],
+      [t('statSlain'), String(s.slain)],
+      [t('statKings'), String(s.kings)],
+      [t('statLost'), String(s.lost)],
     ]
       .map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`)
       .join('');
@@ -122,7 +146,7 @@ export class Hud {
   ) {
     const money = Math.floor(econ.money);
     if (money !== this.lastMoney) {
-      this.money.textContent = money.toLocaleString();
+      this.money.textContent = num(money);
       if (money > this.lastMoney && this.lastMoney >= 0) {
         this.money.classList.remove('bump');
         void this.money.offsetWidth;
@@ -137,11 +161,11 @@ export class Hud {
     this.depth.textContent = `${depthM.toFixed(1)} m`;
     [...this.eggPips.children].forEach((pip, i) => pip.classList.toggle('on', i < econ.levels.egg));
     // Round up like the warning banner does, so both read the same second.
-    this.contact.textContent = monsterUp ? 'CONTACT' : contactIn === null ? '--:--' : fmtTime(Math.max(0, Math.ceil(contactIn)));
+    this.contact.textContent = monsterUp ? t('contactNow') : contactIn === null ? '--:--' : fmtTime(Math.max(0, Math.ceil(contactIn)));
     this.contact.classList.toggle('hot', monsterUp || (warning !== null && warning > 0));
 
-    if (monsterUp) this.setAlert('Monster in the tank. Harpoon it: right-click or R', 'danger');
-    else if (warning !== null) this.setAlert(`Sonar contact. Something big arrives in ${Math.ceil(warning)}`, 'warn');
+    if (monsterUp) this.setAlert(t('alertMonster'), 'danger');
+    else if (warning !== null) this.setAlert(t('alertSonar', { n: Math.ceil(warning) }), 'warn');
     else this.setAlert(null);
 
     for (const item of SHOP) {
@@ -149,15 +173,15 @@ export class Hud {
       const price = priceOf(econ, item.id, fish);
       const l = econ.levels;
       const detail: Record<ShopId, string> = {
-        guppy: 'Fry. Feed it to grow',
-        food: `${foodValue(l)} growth per pellet`,
-        capacity: `${cap} pellets at once`,
-        magnet: `${magnetRadius(l).toFixed(1)} m pull`,
-        harpoon: `${harpoonDamage(l)} dmg per bolt`,
-        egg: `${l.egg}/${EGG_PIECES} pieces`,
+        guppy: t('detailGuppy'),
+        food: t('detailFood', { n: foodValue(l) }),
+        capacity: t('detailCapacity', { n: cap }),
+        magnet: t('detailMagnet', { n: num(Number(magnetRadius(l).toFixed(1))) }),
+        harpoon: t('detailHarpoon', { n: harpoonDamage(l) }),
+        egg: t('detailEgg', { n: l.egg, m: EGG_PIECES }),
       };
       b.querySelector('.detail')!.textContent = detail[item.id];
-      b.querySelector('.price')!.textContent = price === null ? 'MAX' : price.toLocaleString();
+      b.querySelector('.price')!.textContent = price === null ? t('max') : num(price);
       b.classList.toggle('maxed', price === null);
       b.classList.toggle('afford', price !== null && econ.money >= price);
       b.disabled = price === null;

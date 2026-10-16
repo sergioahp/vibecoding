@@ -68,6 +68,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Smoke test
         run: node e2e/smoke.mjs | tee smoke.log
+      - name: Phone test, touch controls in Spanish, landscape and portrait
+        run: node e2e/mobile.mjs | tee mobile.log
       # A scripted player runs whole games. These fail if a balance change makes the
       # game unwinnable, or makes upgrades pointless.
       - name: Balance check, a sensible player wins within 15 minutes
@@ -78,7 +80,7 @@ jobs:
         if: always()
         run: |
           {
-            for f in smoke bot-sensible bot-eggrush; do
+            for f in smoke mobile bot-sensible bot-eggrush; do
               echo "### $f"
               echo '```'
               cat "$f.log" 2>/dev/null || echo 'did not run'

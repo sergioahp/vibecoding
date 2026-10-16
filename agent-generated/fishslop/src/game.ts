@@ -11,7 +11,6 @@ import {
   magnetRadius,
   newEconomy,
   pelletCap,
-  shopDef,
   tryBuy,
   type CoinKind,
   type Economy,
@@ -21,13 +20,17 @@ import { buildTank, floorHeight, type Tank } from './tank.ts';
 import { Bolt, Coin, Fish, Monster, Pellet, type World } from './entities.ts';
 import { Sub } from './sub.ts';
 import { Particles } from './particles.ts';
-import type { Hud } from './hud.ts';
+import { shopName, stageName, type Hud } from './hud.ts';
+import { t } from './i18n.ts';
 import type { Input } from './input.ts';
 import type { Sfx } from './audio.ts';
 
 type State = 'title' | 'playing' | 'paused' | 'over' | 'won';
 
 const FAR = new THREE.Vector3(0, -999, 0);
+/** Narrowest horizontal field of view, so a phone held upright still sees around the sub. */
+const MIN_HFOV = THREE.MathUtils.degToRad(58);
+const BASE_FOV = 62;
 
 export class Game {
   readonly renderer: THREE.WebGLRenderer;
@@ -54,6 +57,9 @@ export class Game {
   private readonly tmp = new THREE.Vector3();
   private readonly tmp2 = new THREE.Vector3();
   private readonly upTmp = new THREE.Vector3();
+  private pixelRatio = Math.min(window.devicePixelRatio, 2);
+  private frameAvg = 1 / 60;
+  private slowFor = 0;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -62,7 +68,7 @@ export class Game {
     private readonly sfx: Sfx,
   ) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(this.pixelRatio);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -90,10 +96,10 @@ export class Game {
         game.particles.emit(f.pos, 6, 0xfff3c4, 1, 0.8, 0.6, 0.6);
         if (grewTo !== null) {
           game.sfx.grow();
-          game.hud.float(f.pos, f.stageInfo.name, 'grow');
+          game.hud.float(f.pos, stageName(f.stage), 'grow');
           if (grewTo === 3) {
             game.stats.kings++;
-            game.hud.toast('A king guppy! It drops gems.', 'good');
+            game.hud.toast(t('toastKing'), 'good');
           }
         }
       },
@@ -101,13 +107,14 @@ export class Game {
         if (game.state !== 'playing') return;
         game.stats.lost++;
         game.sfx.death();
-        game.hud.toast(`A ${f.stageInfo.name.toLowerCase()} starved. Watch for green fish.`, 'bad');
+        game.hud.toast(t('toastStarved', { stage: stageName(f.stage).toLowerCase() }), 'bad');
       },
       onFishEaten(f) {
         game.stats.lost++;
         game.sfx.death();
         game.particles.emit(f.pos, 24, 0xff5d73, 3, 1.4, 0.3, 0.9);
-        game.hud.toast('The monster ate a fish!', 'bad');
+        game.hud.toast(t('toastEaten'), 'bad');
+        game.buzz([60, 40, 60]);
         f.dispose(game.scene);
       },
     };
@@ -122,8 +129,32 @@ export class Game {
     const w = window.innerWidth;
     const h = window.innerHeight;
     this.renderer.setSize(w, h, false);
-    this.camera.aspect = w / h;
+    const aspect = w / h;
+    this.camera.aspect = aspect;
+    const fovForWidth = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(MIN_HFOV / 2) / aspect));
+    this.camera.fov = THREE.MathUtils.clamp(fovForWidth, BASE_FOV, 90);
     this.camera.updateProjectionMatrix();
+  }
+
+  /** Short vibration on phones that support it (Android; iOS Safari has no vibrate). */
+  buzz(pattern: number | number[]) {
+    if (this.input.touch && !this.sfx.muted) navigator.vibrate?.(pattern);
+  }
+
+  /** Drops the render resolution while frames run slow, down to one pixel per CSS pixel. */
+  private adaptQuality(dt: number) {
+    this.frameAvg += (dt - this.frameAvg) * 0.05;
+    if (this.frameAvg < 1 / 40 || this.pixelRatio <= 1) {
+      this.slowFor = 0;
+      return;
+    }
+    this.slowFor += dt;
+    if (this.slowFor < 2) return;
+    this.pixelRatio = Math.max(1, this.pixelRatio - 0.25);
+    this.renderer.setPixelRatio(this.pixelRatio);
+    this.resize();
+    this.slowFor = 0;
+    this.frameAvg = 1 / 60;
   }
 
   private get aliveFish() {
@@ -186,7 +217,7 @@ export class Game {
     this.hud.show(true);
     this.camera.position.set(0, 8.5, 12);
     this.input.requestLock();
-    this.hud.toast('Feed your guppies before they turn green', 'info');
+    this.hud.toast(t('toastStart'), 'info');
   }
 
   pause() {
@@ -198,7 +229,7 @@ export class Game {
   resume() {
     if (this.state !== 'paused') return;
     this.sfx.unlock();
-    if (this.input.fallback) {
+    if (!this.input.needsLock) {
       this.state = 'playing';
       this.hud.overlay(null);
     } else {
@@ -210,7 +241,7 @@ export class Game {
     if (locked && this.state === 'paused') {
       this.state = 'playing';
       this.hud.overlay(null);
-    } else if (!locked && this.state === 'playing' && !this.input.fallback) {
+    } else if (!locked && this.state === 'playing' && this.input.needsLock) {
       this.pause();
     }
   }
@@ -230,7 +261,7 @@ export class Game {
     const cap = pelletCap(this.econ.levels);
     if (this.pelletsOut >= cap) {
       this.sfx.deny();
-      this.hud.toast(`Only ${cap} pellets at once. Upgrade with 3`, 'info');
+      this.hud.toast(t('toastPelletCap', { n: cap }), 'info');
       return;
     }
     const pos = this.tmp.copy(this.sub.pos);
@@ -248,8 +279,9 @@ export class Game {
     const dir = target.sub(nose).normalize();
     const m = this.world.monster;
     if (m && m.alive) {
+      // Thumbs aim less precisely than a mouse, so touch gets a wider lock-on cone.
       const toM = m.pos.clone().sub(nose);
-      if (toM.angleTo(dir) < 0.08) dir.copy(toM.normalize());
+      if (toM.angleTo(dir) < (this.input.touch ? 0.3 : 0.08)) dir.copy(toM.normalize());
     }
     this.bolts.push(new Bolt(this.scene, nose, dir));
     this.particles.emit(nose, 3, 0x9ff7ff, 1.2, 0.8, 0.2, 0.3);
@@ -261,28 +293,29 @@ export class Game {
     const res = tryBuy(this.econ, id, this.aliveFish);
     if (!res.ok) {
       this.sfx.deny();
-      this.hud.toast(res.reason === 'maxed' ? `${shopDef(id).name} is maxed out` : 'Not enough coins', 'bad');
+      this.hud.toast(res.reason === 'maxed' ? t('toastMaxed', { name: shopName(id) }) : t('toastFunds'), 'bad');
       return;
     }
     this.sfx.buy();
+    this.buzz(15);
     if (id === 'guppy') {
       const p = this.sub.pos.clone();
       p.y = Math.min(p.y + 1.5, TANK.maxY - 1.5);
       this.spawnFish(p);
       this.particles.emit(p, 14, 0xffd6a5, 2, 1, 0.8, 0.8);
-      this.hud.toast('New guppy in the tank', 'good');
+      this.hud.toast(t('toastGuppy'), 'good');
     } else if (id === 'egg') {
-      this.hud.toast(`Egg piece ${this.econ.levels.egg} of 3`, 'good');
+      this.hud.toast(t('toastEgg', { n: this.econ.levels.egg }), 'good');
       if (hasWon(this.econ)) this.finish(true);
     } else {
-      this.hud.toast(`${shopDef(id).name} upgraded`, 'good');
+      this.hud.toast(t('toastUpgraded', { name: shopName(id) }), 'good');
     }
   }
 
   handleKey(code: string) {
     if (code === 'KeyM') {
       const muted = this.sfx.toggleMute();
-      this.hud.toast(muted ? 'Sound off' : 'Sound on');
+      this.hud.toast(t(muted ? 'toastSoundOff' : 'toastSoundOn'));
       return;
     }
     if (this.state === 'playing' || this.state === 'paused') {
@@ -295,8 +328,8 @@ export class Game {
     if (this.state === 'playing') {
       if (code === 'KeyF') this.dropFood();
       if (code === 'KeyR') this.fire();
-      if (this.input.fallback && (code === 'KeyP' || code === 'Escape')) this.pause();
-    } else if (this.state === 'paused' && this.input.fallback && (code === 'KeyP' || code === 'Escape')) {
+      if (!this.input.needsLock && (code === 'KeyP' || code === 'Escape')) this.pause();
+    } else if (this.state === 'paused' && !this.input.needsLock && (code === 'KeyP' || code === 'Escape')) {
       this.resume();
     }
   }
@@ -387,6 +420,7 @@ export class Game {
       if (b.update(dt, m) && m) {
         m.damage(harpoonDamage(this.econ.levels));
         this.sfx.hit();
+        this.buzz(12);
         this.particles.emit(b.pos, 8, 0xc77dff, 3, 1, 0, 0.5);
         if (!m.alive) {
           const reward = MONSTER.reward(m.wave - 1);
@@ -394,7 +428,8 @@ export class Game {
           this.stats.slain++;
           this.sfx.monsterDown();
           this.particles.emit(m.pos, 60, 0xc77dff, 6, 2, 0.4, 1.2);
-          this.hud.toast(`Monster down! Grab the treasure: ${reward} coins`, 'good');
+          this.hud.toast(t('toastMonsterDown', { n: reward }), 'good');
+          this.buzz([40, 30, 120]);
         }
       }
     }
@@ -462,9 +497,12 @@ export class Game {
   manualClock = false;
 
   frame = (now: number) => {
+    // Asked for first, so one frame that throws can't stop the game.
+    requestAnimationFrame(this.frame);
     const dt = Math.min((now - this.last) / 1000, 0.05);
     this.last = now;
     if (!this.manualClock) this.tick(dt);
+    this.adaptQuality(dt);
     this.tank.update(this.elapsed);
     this.hud.updateWorld(dt, this.camera, this.world.monster);
     if (this.state !== 'title') {
@@ -481,7 +519,6 @@ export class Game {
       );
     }
     this.renderer.render(this.scene, this.camera);
-    requestAnimationFrame(this.frame);
   };
 
   /** Read-only snapshot for automated smoke tests. */
@@ -494,11 +531,15 @@ export class Game {
       coins: this.world.coins.length,
       monster: !!this.world.monster,
       sub: this.sub.pos.toArray(),
+      yaw: this.sub.yaw,
+      bolts: this.bolts.length,
       playTime: this.playTime,
       minHunger: Math.min(...this.world.fish.filter((f) => f.alive).map((f) => f.hunger)),
       totalGrowth: this.world.fish.reduce((s, f) => s + f.growth, 0),
       pointerLock: this.input.locked,
       fallback: this.input.fallback,
+      touch: this.input.touch,
+      fov: this.camera.fov,
     };
   }
 }
