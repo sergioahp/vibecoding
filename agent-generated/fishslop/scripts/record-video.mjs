@@ -15,10 +15,13 @@
 // the bot uses (with think() every third frame, i.e. every 0.1 s of game time), then runFor(1/30 s)
 // lets the game's own frame loop update the HUD and fires timers such as the 2.6 s toast lifetime.
 // CSS animations run on the real clock, so the recorder pauses them and sets their time from the
-// fake clock instead. The game's own renders are skipped and the recorder draws once per frame
-// right before the screenshot, since each render costs real time. JPEG frames stay in memory and
-// are piped to ffmpeg (image2pipe) at the end, so they never touch disk and a file over the size
-// budget can be re-encoded at a higher CRF without rendering again.
+// fake clock instead.
+//
+// Speed: the game's own renders are skipped and the recorder draws once per frame, right before the
+// screenshot, and the page's DOM is rasterized on the CPU instead of through SwiftShader, which makes
+// each screenshot about a third cheaper. A frame still takes a second or more, so a full reel takes
+// an hour or longer. JPEG frames stay in memory and are piped to ffmpeg (image2pipe) at the end, so
+// they never touch disk and a file over the size budget is re-encoded without rendering again.
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { stat, writeFile } from 'node:fs/promises';
@@ -42,7 +45,8 @@ const WIDTH = 1280;
 const HEIGHT = 720;
 const FADE = 6; // frames of fade through black at each cut
 const LATER_WAVE = 5;
-const CRF = 30;
+// The caustics on the sand are costly to encode: veryslow at CRF 33 lands near 0.9 Mbit/s.
+const CRF = 33;
 const MAX_BYTES = 12_000_000;
 const cfg = botConfig('sensible');
 const FINAL_EGG_PRICE = cfg.prices.egg[2];
@@ -169,7 +173,7 @@ const server = await preview({
   logLevel: 'warn',
 });
 const browser = await chromium.launch({
-  args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+  args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--disable-gpu-rasterization'],
 });
 const errors = [];
 const frames = [];
@@ -226,7 +230,7 @@ try {
       const s = await page.evaluate(([nm, o]) => window.__rec.draw(nm, o), [name, opacity]);
       const jpg = await page.screenshot({ type: 'jpeg', quality: 90, caret: 'initial' });
       pageMs += Date.now() - t0;
-      if (prev && jpg.equals(prev)) checks.duplicates++;
+      if (opacity < 1 && prev && jpg.equals(prev)) checks.duplicates++;
       frames.push(jpg);
       prev = jpg;
       if (s.state === 'playing') played.push(s.t);
@@ -328,7 +332,7 @@ async function encode(crf) {
       ['-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', 'pipe:0'],
       // Chromium's JPEGs are full-range BT.601; players expect limited-range BT.709 for HD.
       ['-vf', 'scale=in_range=full:out_range=tv:in_color_matrix=bt601:out_color_matrix=bt709,format=yuv420p'],
-      ['-c:v', 'libx264', '-preset', 'slow', '-crf', String(crf)],
+      ['-c:v', 'libx264', '-preset', 'veryslow', '-crf', String(crf)],
       ['-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-color_range', 'tv'],
       ['-movflags', '+faststart', '-an', OUT],
     ].flat(),
