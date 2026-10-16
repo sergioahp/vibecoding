@@ -17,6 +17,7 @@ node e2e/smoke.mjs  # plays the built game in headless Chromium (needs a build)
 node e2e/mobile.mjs # plays it again as a Spanish phone, in landscape and portrait (needs a build)
 npm run bot         # a scripted player runs a whole game and reports the balance (needs a build)
 npm run images      # re-renders the link preview and icons into public/ (needs a build)
+npm run video -- out.mp4 [poster.jpg] [--quick]  # records a ~2 minute highlight reel of the bot playing (needs a build)
 ```
 
 ## Controls
@@ -51,6 +52,7 @@ English and Spanish. The game reads `navigator.languages` and uses the first one
 | `e2e/player.mjs` | The scripted player: feeds, shops, fights. Runs inside the page. |
 | `e2e/bot.mjs` | Plays whole games with it and reports the balance. |
 | `scripts/make-images.mjs` | Renders the link preview and icons. |
+| `scripts/record-video.mjs` | Records the bot's highlight reel frame by frame on a fake clock, then encodes it with ffmpeg. |
 
 ## CI and deploy
 

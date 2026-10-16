@@ -32,6 +32,8 @@ const FAR = new THREE.Vector3(0, -999, 0);
  * view stops at 90° before fisheye sets in, so the tallest phones get a little under this. */
 const MIN_HFOV = THREE.MathUtils.degToRad(58);
 const BASE_FOV = 62;
+/** Seconds between buying the last egg piece and the win screen, so the player sees it land. */
+const WIN_DELAY = 1.2;
 /** How far off the crosshair the monster can be and still draw the harpoon onto it, in radians.
  * Thumbs aim less precisely than a mouse, so touch gets the wider cone. */
 const LOCK_ON = { mouse: 0.08, touch: 0.2 } as const;
@@ -51,6 +53,8 @@ export class Game {
   private nextMonsterAt: number = MONSTER.firstAt;
   private wave = 0;
   private warned = false;
+  /** Play time at which the win screen opens, once the last egg piece is bought. */
+  private winAt: number | null = null;
   private fireCooldown = 0;
   private bubbleTimer = 0;
   private titleAngle = 0;
@@ -232,6 +236,7 @@ export class Game {
     this.wave = 0;
     this.warned = false;
     this.stats = { earned: 0, slain: 0, lost: 0, kings: 0 };
+    this.winAt = null;
     this.state = 'playing';
     this.input.consumeLook();
     this.hud.overlay(null);
@@ -335,7 +340,7 @@ export class Game {
       this.hud.toast(t('toastGuppy'), 'good');
     } else if (id === 'egg') {
       this.hud.toast(t('toastEgg', { n: this.econ.levels.egg }), 'good');
-      if (hasWon(this.econ)) this.finish(true);
+      if (hasWon(this.econ)) this.winAt = this.playTime + WIN_DELAY;
     } else {
       this.hud.toast(t('toastUpgraded', { name: shopName(id) }), 'good');
     }
@@ -474,7 +479,12 @@ export class Game {
 
     if (playing) {
       const inTank = w.coins.reduce((s, c) => s + c.value, 0);
-      if (isGameOver(this.econ, this.aliveFish, inTank)) this.finish(false);
+      // Once the egg is complete the run is won, even if the last fish goes in the moment before the screen.
+      if (this.winAt !== null) {
+        if (this.playTime >= this.winAt) this.finish(true);
+      } else if (isGameOver(this.econ, this.aliveFish, inTank)) {
+        this.finish(false);
+      }
     }
   }
 

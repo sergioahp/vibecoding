@@ -163,7 +163,7 @@ export class Hud {
     this.contact.classList.toggle('hot', monsterUp || (warning !== null && warning > 0));
 
     if (monsterUp) this.setAlert(t('alertMonster'), 'danger');
-    else if (warning !== null) this.setAlert(t('alertSonar', { n: Math.ceil(warning) }), 'warn');
+    else if (warning !== null) this.setAlert(t('alertSonar', { time: fmtTime(Math.ceil(warning)) }), 'warn');
     else this.setAlert(null);
 
     for (const item of SHOP) {
