@@ -5,8 +5,9 @@ const RADIUS = 52;
 const DEAD_ZONE = 0.12;
 /** Dragging this many radii out from where the thumb landed switches on boost. */
 const BOOST_AT = 1.4;
-/** Thumb drags cover less distance than mouse moves, so they turn the view faster per pixel. */
-const LOOK_SCALE = 2.2;
+/** Thumb drags cover less distance than mouse moves, so they turn the view faster per pixel:
+ * a 180° turn is two or three swipes. Up and down is gentler, since the view rarely needs to tilt far. */
+const LOOK_SCALE = { x: 3, y: 1.5 } as const;
 /** Touches that start left of this fraction of the screen move the stick; the rest look around. */
 const STICK_ZONE = 0.45;
 
@@ -112,7 +113,9 @@ export class TouchControls {
         s.x = s.y = 0;
       } else {
         const mag = (Math.min(reach, 1) - DEAD_ZONE) / (1 - DEAD_ZONE);
-        s.x = (dx / dist) * mag;
+        // Squared, so a thumb pushing roughly straight ahead doesn't also turn; full sideways is unchanged.
+        const turn = (dx / dist) * mag;
+        s.x = Math.sign(turn) * turn * turn;
         s.y = (-dy / dist) * mag;
       }
       s.boost = reach > BOOST_AT;
@@ -122,7 +125,7 @@ export class TouchControls {
     } else if (e.pointerId === this.lookId) {
       // A drag while paused or after a run would otherwise snap the view on Resume or Play again.
       if (this.actions.playing())
-        this.input.addLook((e.clientX - this.last.x) * LOOK_SCALE, (e.clientY - this.last.y) * LOOK_SCALE);
+        this.input.addLook((e.clientX - this.last.x) * LOOK_SCALE.x, (e.clientY - this.last.y) * LOOK_SCALE.y);
       this.last.x = e.clientX;
       this.last.y = e.clientY;
     }

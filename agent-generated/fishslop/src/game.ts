@@ -32,6 +32,9 @@ const FAR = new THREE.Vector3(0, -999, 0);
  * view stops at 90° before fisheye sets in, so the tallest phones get a little under this. */
 const MIN_HFOV = THREE.MathUtils.degToRad(58);
 const BASE_FOV = 62;
+/** How far off the crosshair the monster can be and still draw the harpoon onto it, in radians.
+ * Thumbs aim less precisely than a mouse, so touch gets the wider cone. */
+const LOCK_ON = { mouse: 0.08, touch: 0.2 } as const;
 
 export class Game {
   readonly renderer: THREE.WebGLRenderer;
@@ -58,6 +61,7 @@ export class Game {
   private readonly tmp = new THREE.Vector3();
   private readonly tmp2 = new THREE.Vector3();
   private readonly upTmp = new THREE.Vector3();
+  private readonly aimTmp = new THREE.Vector3();
   private pixelRatio = Math.min(window.devicePixelRatio, 2);
   private frameAvg = 1 / 60;
   private slowFor = 0;
@@ -289,6 +293,15 @@ export class Game {
     this.sfx.plop();
   }
 
+  /** Whether the crosshair is on the monster, measured as the player sees it so range doesn't matter. */
+  private onTarget() {
+    const m = this.world.monster;
+    if (!m || !m.alive) return false;
+    const camDir = this.camera.getWorldDirection(this.aimTmp);
+    const cone = this.input.touch ? LOCK_ON.touch : LOCK_ON.mouse;
+    return camDir.angleTo(m.pos.clone().sub(this.camera.position)) < cone;
+  }
+
   private fire() {
     if (this.fireCooldown > 0) return;
     this.fireCooldown = HARPOON_COOLDOWN;
@@ -297,11 +310,7 @@ export class Game {
     const target = this.camera.position.clone().addScaledVector(camDir, 40);
     const dir = target.sub(nose).normalize();
     const m = this.world.monster;
-    if (m && m.alive) {
-      // Thumbs aim less precisely than a mouse, so touch gets a wider lock-on cone.
-      const toM = m.pos.clone().sub(nose);
-      if (toM.angleTo(dir) < (this.input.touch ? 0.3 : 0.08)) dir.copy(toM.normalize());
-    }
+    if (m && this.onTarget()) dir.copy(m.pos.clone().sub(nose).normalize());
     this.bolts.push(new Bolt(this.scene, nose, dir));
     this.particles.emit(nose, 3, 0x9ff7ff, 1.2, 0.8, 0.2, 0.3);
     this.sfx.pew();
@@ -397,7 +406,10 @@ export class Game {
       this.playTime += dt;
       this.sub.update(dt, this.input, w.colliders);
       this.fireCooldown -= dt;
-      if (this.input.buttons.has(2) || this.input.keys.has('KeyR')) this.fire();
+      // On touch the harpoon also fires by itself while the crosshair is on the monster, so a
+      // player's right thumb can keep aiming instead of switching to the button.
+      const autoFire = this.input.touch && this.onTarget();
+      if (this.input.buttons.has(2) || this.input.keys.has('KeyR') || autoFire) this.fire();
       this.bubbleTimer -= dt;
       if (this.sub.thrust > 0.1 && this.bubbleTimer <= 0) {
         this.bubbleTimer = 0.06;

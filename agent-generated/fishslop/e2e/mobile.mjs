@@ -262,6 +262,19 @@ try {
     expect(firing.bolts >= 1, 'the harpoon button did nothing in portrait');
   });
 
+  await step('with the crosshair on a monster, the harpoon fires by itself', async () => {
+    const s = await page.evaluate(() => {
+      const g = window.__fishslop;
+      g.nextMonsterAt = g.playTime;
+      g.advance(0.1);
+      // Put the monster 10 m straight down the crosshair.
+      const dir = g.camera.getWorldDirection(g.camera.position.clone());
+      g.world.monster.pos.copy(g.camera.position).addScaledVector(dir, 10);
+      return g.advance(0.3);
+    });
+    expect(s.monster && s.bolts >= 1, `no bolts fired at a monster under the crosshair: ${JSON.stringify(s)}`);
+  });
+
   // Software rendering is slow; a second page rendering alongside would halve both.
   await phone.close();
 

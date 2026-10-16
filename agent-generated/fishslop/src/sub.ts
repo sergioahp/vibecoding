@@ -63,7 +63,11 @@ export class Sub {
     const vert = input.axis(['KeyC', 'KeyQ'], ['Space', 'KeyE']);
     const boost = input.keys.has('ShiftLeft') || input.keys.has('ShiftRight') || stick.boost;
 
-    const dir = this.forward().multiplyScalar(fwd).add(this.right().multiplyScalar(strafe));
+    const ahead = this.forward();
+    // On touch, looking up or down only aims: the stick drives level and Up/Down change depth.
+    // Otherwise every look drag would leave the sub slowly climbing or sinking.
+    if (input.touch) ahead.setY(0).normalize();
+    const dir = ahead.multiplyScalar(fwd).add(this.right().multiplyScalar(strafe));
     dir.y += vert;
     if (dir.lengthSq() > 1) dir.normalize();
     this.thrust = dir.length();

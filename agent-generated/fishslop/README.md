@@ -23,7 +23,7 @@ npm run images      # re-renders the link preview and icons into public/ (needs 
 
 **Keyboard and mouse:** WASD swim, mouse look, Space/C up and down, Shift boost, click or F to drop food, right-click or R to fire the harpoon, 1–6 to buy, M to mute, Esc to pause.
 
-**Touch:** the left thumb steers with a stick that appears where it lands (up drives, sideways turns, drag past the ring to boost). The right thumb drags to look. Buttons feed, fire (hold for repeat), rise, sink and pause; tap the shop to buy. The harpoon locks on from a wider angle than with a mouse, and with sound on, Android phones buzz on buys, harpoon hits, and when the monster eats a fish.
+**Touch:** the left thumb steers with a stick that appears where it lands (up drives, sideways turns, drag past the ring to boost). The right thumb drags to look; looking up or down only aims, and the sub keeps its depth until you press rise or sink. Buttons feed, fire (hold for repeat), rise, sink and pause; tap the shop to buy. While the crosshair is on a monster the harpoon fires by itself, so the right thumb can keep aiming; lock-on is measured from the crosshair, wider on touch than with a mouse. With sound on, Android phones buzz on buys, harpoon hits, and when the monster eats a fish.
 
 The game picks touch controls when the device's main pointer is a finger (`(pointer: coarse)`), and switches whenever the player taps or clicks with the other kind. It works held either way: in portrait the view widens and the controls move above the shop. On a phone, Dive in also goes fullscreen where the browser allows it (Android; iPhone Safari doesn't). Added to the home screen, it opens from its own icon without the browser bars.
 
